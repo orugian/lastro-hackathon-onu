@@ -55,7 +55,7 @@
  "score": 0.0,
  "source_mode": "real",
  "analise_imagem": false,
- "processado_em": "2026-11-06T07:57:38+00:00",
+ "processado_em": "2026-11-06T08:15:05+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -170,7 +170,6 @@
   }
  ],
  "limitacoes": [
-  "Imagem não avaliada por escala: AOI com 149 km de lado excede 30 km. Análise somente documental.",
   "Análise somente documental (IF100 × autorização); imagem de satélite não processada para esta autorização."
  ],
  "linha_do_tempo": [

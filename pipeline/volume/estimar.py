@@ -169,6 +169,7 @@ def modelo_info() -> dict:
             "sigma_upa": conf.get("sigma_upa", 0.35), "cobertura_celula": conf.get("cobertura_celula_conformal"),
             "sigma_bloco": conf.get("sigma_bloco", 0.3), "cobertura_bloco": conf.get("cobertura_bloco"),
             "a_frac_excesso_min": conf.get("a_frac_excesso_min", 0.10), "a_fpr": conf.get("a_fpr"),
+            "a_frac_vol_sl_min": conf.get("a_frac_vol_sl_min", 0.30),
             "cobertura_upa": conf.get("cobertura_upa_mc"), "r2": conf.get("r2"), "n_upas": conf.get("n_upas"),
             "features": conf.get("features", FEATS)}
 

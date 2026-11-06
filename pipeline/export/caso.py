@@ -317,7 +317,7 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     mud_valid = mud
     if tipo == "POA":
         fl = [F.flag_A(cel, mc, info.get("cobertura_bloco") or info.get("cobertura_celula"), n_arv, blocos=blocos,
-                       frac_min=info.get("a_frac_excesso_min", F.A_FRAC_MIN)),
+                       frac_min=info.get("a_frac_excesso_min", F.A_FRAC_MIN), frac_vol_min=info.get("a_frac_vol_sl_min", 0.30)),
               F.flag_B(mud_valid, cel, deter_u, mc, "POA", area_upa_ha=area_aut, area_buffer_ha=area_buffer_ha),
               F.flag_C(doc), F.flag_D_poa(doc, area_aut)]
         fe = F.flag_E_poa(doc)

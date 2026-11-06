@@ -76,7 +76,7 @@
  "score": 0.7559,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T07:57:13+00:00",
+ "processado_em": "2026-11-06T08:02:48+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -355,6 +355,38 @@
    "resolucao_m": 10.0,
    "nuvem_pct": null,
    "par": null
+  },
+  {
+   "id": "cbers_pre",
+   "sensor": "CBERS-4A WPM",
+   "rotulo": "CBERS-4A WPM 2 m · 2025-11-16",
+   "data": "2025-11-16",
+   "png": "img/cbers_pre.png",
+   "bounds": [
+    -60.10169539464805,
+    -5.323607746525801,
+    -60.00280741831384,
+    -5.250428178004168
+   ],
+   "resolucao_m": 2.0,
+   "nuvem_pct": 0.8,
+   "par": "pre"
+  },
+  {
+   "id": "cbers_pos",
+   "sensor": "CBERS-4A WPM",
+   "rotulo": "CBERS-4A WPM 2 m · 2026-07-27",
+   "data": "2026-07-27",
+   "png": "img/cbers_pos.png",
+   "bounds": [
+    -60.101561815816176,
+    -5.32329811154053,
+    -60.00295213389368,
+    -5.250369954255794
+   ],
+   "resolucao_m": 2.0,
+   "nuvem_pct": 0.0,
+   "par": "pos"
   }
  ],
  "camadas": [
@@ -631,13 +663,20 @@
    "consultado_em": "2026-11-06T01:50:26+00:00",
    "versao": null,
    "licenca": "Dados abertos"
+  },
+  {
+   "id": "cbers",
+   "fonte": "INPE BDC - CBERS-4A WPM 2 m (CB4A-WPM-PCA-FUSED-1)",
+   "url": "https://data.inpe.br/bdc/stac/v1/collections/CB4A-WPM-PCA-FUSED-1",
+   "consultado_em": "2026-11-06T07:56:07+00:00",
+   "versao": null,
+   "licenca": "CC-BY-SA"
   }
  ],
  "limitacoes": [
   "A estação seca posterior ao período de interesse (2027) ainda não está disponível; usada a mais recente (2026).",
   "Máscara de floresta: só conta distúrbio em pixel com NDVI pré ≥ 0.7 e fora de PRODES até 2025; 94% da AOI observável era floresta no pré.",
   "Nuvem/sem dado: 18 de 2128 células da UPA (1%) não observáveis (classe nao_observavel); volume dessas células não entra na estimativa.",
-  "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
   "Janelas Sentinel-2: pré 2025-06-01 a 2025-10-05; pós 2026-06-01 a 2026-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 34 e 38.",
   "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
   "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
@@ -676,9 +715,19 @@
    "fonte": "s2"
   },
   {
+   "data": "2025-11-16",
+   "evento": "Imagem CBERS-4A WPM (pre)",
+   "fonte": "cbers"
+  },
+  {
    "data": "2026-06-01",
    "evento": "Início da janela Sentinel-2 pós (2026-06-01 a 2026-10-05)",
    "fonte": "s2"
+  },
+  {
+   "data": "2026-07-27",
+   "evento": "Imagem CBERS-4A WPM (pos)",
+   "fonte": "cbers"
   },
   {
    "data": "2026-08-14",

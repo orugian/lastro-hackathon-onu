@@ -178,18 +178,22 @@ def avaliar_regra_A(df, q_m3_ha, area, sigma_upa):
     r["autex"] = r["bloco"].str.split("|").str[0]
     r["sl"] = (r.vd > r.p90) & (r.vd >= 20)
     r["exc"] = np.where(r.sl, r.vd - r.p90, 0)
-    up = r.groupby("autex").agg(vd=("vd", "sum"), exc=("exc", "sum"), nsl=("sl", "sum"))
+    r["vd_sl"] = np.where(r.sl, r.vd, 0)
+    up = r.groupby("autex").agg(vd=("vd", "sum"), exc=("exc", "sum"), nsl=("sl", "sum"), vd_sl=("vd_sl", "sum"))
     up["frac"] = up.exc / up.vd.clip(lower=1)
-    # limiar da fração de excesso: p95 nas UPAs limpas (fora da amostra) -> ~5% de disparo por construção
+    up["frac_vol"] = up.vd_sl / up.vd.clip(lower=1)
+    # limiares: p95 nas UPAs limpas (fora da amostra) -> ~5% de disparo por construção, cada critério
     a_frac = float(max(0.10, np.quantile(up.frac, 0.95)))
+    a_frac_vol = float(max(0.15, np.quantile(up.frac_vol, 0.95)))
     # critério UPA: Σ declarado > p90 do MC da UPA
     upa_div = {}
     for u, idx in df.groupby("autex").indices.items():
         p = _upa_mc(None, q[idx], sigma_upa)
         upa_div[u] = vd[idx].sum() > p[2]
     up["upa_div"] = pd.Series(upa_div)
-    up["dispara"] = up.upa_div | ((up.frac >= a_frac) & (up.exc >= 50))
+    up["dispara"] = up.upa_div | ((up.frac >= a_frac) & (up.exc >= 50)) | ((up.frac_vol >= a_frac_vol) & (up.nsl >= 3))
     return {"sigma_bloco": s_best, "cobertura_bloco": grid[s_best][1],
+            "a_frac_vol_sl_min": a_frac_vol, "a_frac_vol_sl_dist": up.frac_vol.describe().round(3).to_dict(),
             "cobertura_bloco_grid": {str(k): v[1] for k, v in grid.items()},
             "n_blocos": int(len(r)), "frac_blocos_sem_lastro": float(r.sl.mean()),
             "a_frac_excesso_min": a_frac, "a_frac_excesso_dist": up.frac.describe().round(3).to_dict(),
@@ -295,6 +299,7 @@ def main(argv=None):
             "cobertura_upa_mc": metr["upa_mc_conformal"]["cobertura_p10_p90"],
             "sigma_bloco": metr["sigma_bloco"], "cobertura_bloco": metr["cobertura_bloco"],
             "a_frac_excesso_min": metr["a_frac_excesso_min"], "a_fpr": metr["a_taxa_disparo_upas_limpas"],
+            "a_frac_vol_sl_min": metr["a_frac_vol_sl_min"],
             "r2": metr["celula_antes"]["r2"], "n_upas": int(df.autex.nunique()), "n_celulas": len(df),
             "gerado_em": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     (VOL_DIR / "conformal.json").write_text(json.dumps(conf, indent=1), encoding="utf-8")

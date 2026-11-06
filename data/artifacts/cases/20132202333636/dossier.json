@@ -76,7 +76,7 @@
  "score": 0.7408,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T07:56:42+00:00",
+ "processado_em": "2026-11-06T08:04:20+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -369,6 +369,38 @@
    "resolucao_m": 10.0,
    "nuvem_pct": null,
    "par": null
+  },
+  {
+   "id": "cbers_pre",
+   "sensor": "CBERS-4A WPM",
+   "rotulo": "CBERS-4A WPM 2 m · 2023-09-02",
+   "data": "2023-09-02",
+   "png": "img/cbers_pre.png",
+   "bounds": [
+    -61.26992160558541,
+    -8.28650487420471,
+    -61.179171361431244,
+    -8.210371740271894
+   ],
+   "resolucao_m": 2.0,
+   "nuvem_pct": 0.0,
+   "par": "pre"
+  },
+  {
+   "id": "cbers_pos",
+   "sensor": "CBERS-4A WPM",
+   "rotulo": "CBERS-4A WPM 2 m · 2026-08-22",
+   "data": "2026-08-22",
+   "png": "img/cbers_pos.png",
+   "bounds": [
+    -61.26992160558541,
+    -8.28650487420471,
+    -61.179171361431244,
+    -8.210371740271894
+   ],
+   "resolucao_m": 2.0,
+   "nuvem_pct": 0.0,
+   "par": "pos"
   }
  ],
  "camadas": [
@@ -618,7 +650,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T07:56:07+00:00",
+   "consultado_em": "2026-11-06T08:04:06+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },
@@ -645,13 +677,20 @@
    "consultado_em": "2026-11-06T01:50:26+00:00",
    "versao": null,
    "licenca": "Dados abertos"
+  },
+  {
+   "id": "cbers",
+   "fonte": "INPE BDC - CBERS-4A WPM 2 m (CB4A-WPM-PCA-FUSED-1)",
+   "url": "https://data.inpe.br/bdc/stac/v1/collections/CB4A-WPM-PCA-FUSED-1",
+   "consultado_em": "2026-11-06T08:04:06+00:00",
+   "versao": null,
+   "licenca": "CC-BY-SA"
   }
  ],
  "limitacoes": [
   "A estação seca posterior ao período de interesse (2027) ainda não está disponível; usada a mais recente (2026).",
   "Máscara de floresta: só conta distúrbio em pixel com NDVI pré ≥ 0.7 e fora de PRODES até 2023; 89% da AOI observável era floresta no pré.",
   "Nuvem/sem dado: 8 de 1443 células da UPA (1%) não observáveis (classe nao_observavel); volume dessas células não entra na estimativa.",
-  "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
   "Janelas Sentinel-2: pré 2023-06-01 a 2023-10-05; pós 2026-06-01 a 2026-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 200 e 296.",
   "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
   "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
@@ -673,6 +712,11 @@
    "data": "2023-06-01",
    "evento": "Início da janela Sentinel-2 pré (2023-06-01 a 2023-10-05)",
    "fonte": "s2"
+  },
+  {
+   "data": "2023-09-02",
+   "evento": "Imagem CBERS-4A WPM (pre)",
+   "fonte": "cbers"
   },
   {
    "data": "2023-12-27",
@@ -718,6 +762,11 @@
    "data": "2026-06-30",
    "evento": "24 alerta(s) DETER no entorno de 2 km desde 2021-03-26; mais recente nesta data (proximidade não implica vínculo)",
    "fonte": "deter"
+  },
+  {
+   "data": "2026-08-22",
+   "evento": "Imagem CBERS-4A WPM (pos)",
+   "fonte": "cbers"
   },
   {
    "data": "2026-10-17",

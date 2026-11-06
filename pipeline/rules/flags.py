@@ -87,14 +87,14 @@ def maior_bloco_contiguo(ids: Iterable[str]) -> int:
 
 
 def flag_A(celulas, mc: Optional[dict], cobertura_calib: Optional[float], n_arvores: int,
-           blocos=None, frac_min: float = A_FRAC_MIN, exc_min_m3: float = 50.0) -> Flag:
+           blocos=None, frac_min: float = A_FRAC_MIN, exc_min_m3: float = 50.0, frac_vol_min: float = 0.30) -> Flag:
     """Avaliação em dois níveis onde a incerteza está calibrada (R² por célula ≈ 0, então nunca por célula isolada):
     (i) UPA: Σ declarado nas células observáveis > p90 do Monte Carlo da UPA;
     (ii) blocos 3×3 (9 ha): bloco sem_lastro se Σ declarado > p90 do bloco (MC com fator comum por bloco calibrado
          para cobertura 80%); indício se Σ excesso ≥ frac_min do declarado (p95 nas UPAs limpas) e ≥ exc_min_m3.
     blocos: DataFrame de pipeline.volume.estimar.avaliar_blocos. Sem blocos -> critério legado por células."""
     if blocos is not None:
-        return _flag_A_blocos(celulas, mc, cobertura_calib, n_arvores, blocos, frac_min, exc_min_m3)
+        return _flag_A_blocos(celulas, mc, cobertura_calib, n_arvores, blocos, frac_min, exc_min_m3, frac_vol_min)
     regra = (f"Σ(vol. declarado − p90 compatível com a imagem) nas células 'sem_lastro' (declarado > p90 e ≥ 5 m³). "
              f"Indício se o volume declarado na UPA superar o p90 do volume estimado pela imagem (Monte Carlo) E "
              f"(houver ≥ {A_BLOCO_MIN} células sem_lastro contíguas OU o excesso for ≥ {A_FRAC_MIN:.0%} do declarado). "
@@ -142,11 +142,11 @@ def flag_A(celulas, mc: Optional[dict], cobertura_calib: Optional[float], n_arvo
     return _flag("A", "sem_indicio", "info", conf, regra, ev)
 
 
-def _flag_A_blocos(celulas, mc, cobertura_calib, n_arvores, blocos, frac_min, exc_min_m3) -> Flag:
+def _flag_A_blocos(celulas, mc, cobertura_calib, n_arvores, blocos, frac_min, exc_min_m3, frac_vol_min=0.30) -> Flag:
     regra = (f"Avaliado em blocos de 3×3 células (9 ha) e no total da UPA, onde a incerteza está calibrada (nunca por árvore ou célula isolada). "
              f"Indício se (i) o volume declarado na UPA (IF100, células observáveis) supera o p90 do volume compatível com a imagem "
-             f"(Monte Carlo), ou (ii) os blocos com declarado > p90 do bloco somam excesso ≥ {frac_min:.0%} do declarado e ≥ {exc_min_m3:.0f} m³ "
-             f"(limiar = p95 das UPAs de calibração sem indício).")
+             f"(Monte Carlo), ou (ii) os blocos com declarado > p90 do bloco somam excesso ≥ {frac_min:.0%} do declarado e ≥ {exc_min_m3:.0f} m³, "
+             f"ou (iii) concentram ≥ {frac_vol_min:.0%} do volume declarado em ≥ 3 blocos (limiares = p95 das UPAs de calibração sem indício).")
     if not n_arvores:
         return _flag("A", "nao_avaliado", "info", 0.0, regra, [Evidencia(tipo="texto", descricao="Sem árvores IF100 declaradas: não há volume a confrontar com a imagem.", fonte="if100")])
     if celulas is None or len(celulas) == 0 or mc is None:
@@ -168,10 +168,11 @@ def _flag_A_blocos(celulas, mc, cobertura_calib, n_arvores, blocos, frac_min, ex
     upa = mc.get("upa", {})
     decl_upa = float(mc.get("declarado_upa_m3", decl))
     upa_div = _isnum(upa.get("p90")) and decl_upa > upa["p90"]
-    bloco_crit = frac >= frac_min and exc >= exc_min_m3
+    frac_vol = float(sl["vol_declarado"].sum()) / decl if decl > 0 else 0.0
+    bloco_crit = (frac >= frac_min and exc >= exc_min_m3) or (frac_vol >= frac_vol_min and len(sl) >= 3)
     ncel = int(c["classe"].eq("sem_lastro").sum())
     ev = [
-        Evidencia(tipo="metrica", descricao=f"{len(sl)} de {len(b)} blocos de 9 ha com volume declarado acima do p90 compatível com a imagem ({ncel} células destacadas)",
+        Evidencia(tipo="metrica", descricao=f"{len(sl)} de {len(b)} blocos de 9 ha com volume declarado acima do p90 compatível com a imagem ({ncel} células destacadas), concentrando {_fmt(100*frac_vol,0)}% do volume declarado (limiar {_fmt(100*frac_vol_min,0)}%)",
                   valor=float(len(sl)), unidade="blocos", camada="celulas", filtro={"classe": "sem_lastro"}, fonte="if100"),
         Evidencia(tipo="metrica", descricao=f"Volume declarado nesses blocos: {_fmt(float(sl['vol_declarado'].sum()))} m³; p90 compatível com a imagem: {_fmt(float(sl['p90'].sum()))} m³",
                   valor=round(float(sl["vol_declarado"].sum()), 1), unidade="m³", fonte="if100"),
