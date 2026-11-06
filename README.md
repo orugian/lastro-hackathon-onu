@@ -6,9 +6,9 @@ O Lastro é uma triagem para priorizar a fiscalização da exploração madeirei
 
 > **Aviso de uso.** Resultado experimental de triagem. **Não constitui prova nem auto de infração.** Indica onde olhar primeiro. A conclusão exige vistoria e análise técnica humana.
 
-![Tela de triagem do Lastro](tests/web/screens/mock-01-triagem.png)
+![Tela de triagem do Lastro com dados reais do polo AMACRO](tests/web/screens/real-01-triagem.png)
 
-*Tela de triagem com dados de demonstração (mock). Dossiê e Confiabilidade completam a jornada.*
+*Triagem com dados reais do polo AMACRO (06/11/2026). Dossiê ([exemplo](tests/web/screens/real-03-dossie-a-evidencia.png)) e Confiabilidade completam a jornada.*
 
 ## Rodar a demo (1 comando)
 

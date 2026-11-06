@@ -38,25 +38,25 @@
 
 > Trocar para a aba do app (Alt+Tab). Se o app não responder em 5 s, ir ao **Plano B**.
 
-1. **Triagem** (já aberta em `#/`). "Esta é a fila do polo: 1.142 autorizações, ordenadas por prioridade." Mostrar o selo "Resultado experimental".
-2. No filtro **"Qualquer indício"**, mostrar as opções e voltar. Marcar **"Só com imagem analisada"** e clicar no **1º caso** da lista. Caso exato: [a preencher após a regeneração do index; na versão preliminar era um POA em Candeias do Jamari].
+1. **Triagem** (já aberta em `#/`). "Esta é a fila do polo: 1.142 autorizações, ordenadas por prioridade; 48 com algum indício." Mostrar o selo "Resultado experimental".
+2. No filtro **"Qualquer indício"**, mostrar as opções e voltar. Marcar **"Só com imagem analisada"** e clicar no **POA de Candeias do Jamari com prioridade 85** (`20112202459084`, 1º POA da lista). **Não abrir** os casos ASV/UAS de Porto Velho que aparecem no topo: as áreas de distúrbio deles estão em verificação.
 3. **Dossiê.** Apontar o cabeçalho (AUTEX, área, validade) e o card **"O volume declarado tem lastro?"**, com as barras autorizado × declarado × estimado e a faixa p10–p90.
 4. Arrastar o **divisor antes/depois** do mapa: "Sentinel-2 antes e depois da exploração."
 5. Em **Indícios**, abrir **C (árvores fora do polígono)** e clicar na evidência **"ver no mapa"**: os pontos fora da UPA acendem. "Árvores declaradas fora do polígono autorizado, entre 20 m e 5 km do limite."
 6. Abrir **E (fora da validade)**: "Datas de exploração declaradas depois do fim da validade."
-7. Abrir **A** e ler o status (indício ou inconclusivo) com a regra. Se estiver inconclusivo: "Há blocos de células sem lastro, mas o total da UPA cabe no intervalo. O sistema não força a mão." [confirmar no index regenerado]
+7. Abrir **A (volume sem lastro)**: "Aqui o sistema diz **sem indício**. O volume declarado cabe no intervalo que a imagem comporta, e nenhum bloco de 9 ha passa do limiar. Ele não força a mão." Abrir **B** e mostrar os polígonos de distúrbio fora da UPA, com o alerta DETER coincidente como evidência.
 8. Clicar em **Confiabilidade** no topo e passar rápido pelos dois cards (detector e cobertura). Detalhes no próximo slide.
 9. (Opcional, se sobrar tempo) **"Analisar autorização"**: digitar o mesmo AUTEX e mostrar que abre do acervo processado.
 
 > Voltar ao deck (Alt+Tab) e avançar para o slide 7.
 
-**Observação:** os 3 casos reais com imagem não têm recorte CBERS nesta execução. O alternador CBERS-4A 2 m aparece no caso de demonstração marcado como SIMULAÇÃO (screenshot do slide 6). Não prometer CBERS no caso real.
+**Observação:** os casos reais com imagem não têm recorte CBERS nesta execução; o mapa mostra só Sentinel-2. Não prometer CBERS no caso real.
 
 ### 7. Resultados (0:30)
-"No polo inteiro: 1.142 autorizações avaliadas, 46 com algum indício documental (11 com árvore fora do polígono, 10 acima do autorizado, 29 fora da validade) e 1,87 milhão de metros cúbicos declarados confrontados. Os números AUTEX estão mascarados no slide. No app eles são públicos, sem nome nem CNPJ."
+"No polo inteiro: 1.142 autorizações avaliadas, 48 com ao menos um indício (11 com árvore fora do polígono, 11 acima do autorizado, 29 fora da validade, 5 com distúrbio sem declaração) e 1,87 milhão de metros cúbicos declarados confrontados. A assinatura de volume sem lastro não disparou nos POA com imagem, e isso também é resultado: a calibração não acusa por padrão. Os números AUTEX estão mascarados no slide. No app eles são públicos, sem nome nem CNPJ."
 
 ### 8. Confiabilidade (0:30)
-"Tudo foi medido em áreas que o modelo não viu. O detector dobra o IoU do baseline: 0,56 contra 0,28. No Colab, nos mesmos pixels, uma U-Net siamesa superou o LightGBM em 0,037 de IoU (0,74 contra 0,70). O próximo passo é exportar os pesos e colocá-la no pipeline. E o intervalo de volume cobre o declarado em 83% das células para 80% esperados. Ou seja, quando dizemos p10 a p90, a faixa vale. O ponto central por célula é fraco, por isso nunca decidimos pela mediana."
+"Tudo foi medido em áreas que o modelo não viu. O detector dobra o IoU do baseline: 0,56 contra 0,28. No Colab, nos mesmos pixels, uma U-Net siamesa superou o LightGBM em 0,037 de IoU (0,74 contra 0,70). O próximo passo é exportar os pesos e colocá-la no pipeline. E o intervalo de volume cobre o declarado em 84% das células para 80% esperados, e em 89% no total da UPA. Ou seja, quando dizemos p10 a p90, a faixa vale. O ponto central por célula é fraco, por isso nunca decidimos pela mediana."
 
 ### 9. Limites (0:15)
 "É triagem, não acusação. A clareira de uma árvore fecha em meses; nuvem não vira prova de ausência; dado faltante vira 'não avaliado'. Cada indício mostra regra, limiar e fonte para revisão humana."
@@ -74,8 +74,8 @@
 
 ## Perguntas prováveis da banca
 
-- **"Isso não acusa quem está em dia?"** O sistema abre indício, não conclui. A só dispara com divergência no total da UPA acima do p90 **e** concentrada. [Citar o resultado do index regenerado.]
-- **"Por que não árvore por árvore?"** A clareira de uma árvore tem de 200 a 600 m², é quase sub-pixel a 10 m e fecha em meses. Some-se o erro de GPS do IF100. Por isso a decisão é por célula de 1 ha e por UPA.
+- **"Isso não acusa quem está em dia?"** O sistema abre indício, não conclui. A só dispara com o total da UPA acima do p90 ou com excesso em blocos de 9 ha acima do p95 das UPAs sem indício. Nos 3 POA com imagem, ficou sem indício.
+- **"Por que não árvore por árvore?"** A clareira de uma árvore tem de 200 a 600 m², é quase sub-pixel a 10 m e fecha em meses. Some-se o erro de GPS do IF100. Por isso a decisão é por bloco de 9 ha e por UPA.
 - **"E a nuvem?"** Célula com menos de 70% de pixels válidos é "não observável" e nunca vira evidência.
 - **"O modelo foi treinado com a resposta?"** Não. O detector usa só rótulos do INPE. O IF100 entra apenas na calibração de volume, e com validação por UPA fora da amostra.
-- **"Quanto confiar?"** Detector: IoU 0,56 (F1 0,72), validado espacialmente. Volume: cobertura de 83,5% para 80% nominais. O R² por célula é cerca de 0, por isso usamos faixas, não pontos.
+- **"Quanto confiar?"** Detector: IoU 0,56 (F1 0,72), validado espacialmente. Volume: cobertura de 84,2% para 80% nominais (88,9% por UPA). O R² por célula é cerca de 0,07, por isso usamos faixas, não pontos. Deep learning: U-Net com IoU 0,74 contra 0,70 do LightGBM nos mesmos pixels do Colab.
