@@ -4,8 +4,13 @@ import numpy as np
 from .common import RAW, OUT, numbers, dates, utm, read_chunks
 
 def normaliza_coordenadas(lat, lon):
-    lat, lon = -numbers(lat).abs(), -numbers(lon).abs()
-    valid = lat.between(-90,90) & lon.between(-180,180)
+    """IF100 publica coordenadas sem sinal, às vezes com lat/lon trocadas e com zeros.
+    Amazônia Legal: |lon| em [44, 74], |lat| em [0, 18]. Troca quando |lat| > |lon|; zero = ausente."""
+    alat, alon = numbers(lat).abs(), numbers(lon).abs()
+    swap = alat > alon
+    alat, alon = alat.where(~swap, alon), alon.where(~swap, alat)
+    lat, lon = -alat, -alon
+    valid = alat.between(0.01, 18) & alon.between(44, 74)
     return lat.where(valid), lon.where(valid)
 
 def localiza_arvores(df, autorizacoes):

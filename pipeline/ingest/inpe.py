@@ -29,7 +29,15 @@ def download(name, layer, temporal, sort, force=False):
         offset += len(batch)
     df = gpd.GeoDataFrame.from_features(features,crs=4326) if features else gpd.GeoDataFrame(geometry=[],crs=4326)
     if not df.empty:
-        df.geometry = df.geometry.map(lambda geom: make_valid(geom,method='linework'))
+        def _fix(geom):
+            if geom is None or geom.is_valid:
+                return geom
+            try:
+                return make_valid(geom)
+            except Exception:
+                return geom.buffer(0)
+        df.geometry = df.geometry.map(_fix)
+        df = df[df.geometry.notna() & ~df.geometry.is_empty]
         if name == 'deter': df['classe'] = df.classname; df['data'] = df.view_date
         else: df['classe'] = df.class_name; df['ano'] = df.year
     df.to_parquet(OUT / f'{name}.parquet',index=False)
