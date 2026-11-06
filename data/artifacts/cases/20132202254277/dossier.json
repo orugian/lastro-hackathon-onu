@@ -27,7 +27,7 @@
   "p90": 23337.6
  },
  "area_disturbio_ha": 154.91,
- "area_disturbio_fora_ha": 21.34,
+ "area_disturbio_fora_ha": 1.73,
  "n_arvores_declaradas": 2048,
  "flags": [
   {
@@ -76,7 +76,7 @@
  "score": 0.6958,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T07:36:45+00:00",
+ "processado_em": "2026-11-06T07:56:25+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -135,12 +135,12 @@
    "status": "indicio",
    "severidade": "alta",
    "confianca": 0.62,
-   "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização (indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
+   "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização e adjacente (borda a ≤ 500 m da UPA; indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
    "evidencias": [
     {
      "tipo": "geometria",
-     "descricao": "21,3 ha de distúrbio em 20 polígono(s) fora da UPA, até 1.997 m do limite",
-     "valor": 21.34,
+     "descricao": "1,7 ha de distúrbio em 2 polígono(s) fora da UPA, até 601 m do limite",
+     "valor": 1.73,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": {
@@ -158,6 +158,15 @@
       "classe": "nao_declarado"
      },
      "fonte": "s2"
+    },
+    {
+     "tipo": "texto",
+     "descricao": "Contexto regional (não computado): 19,6 ha de distúrbio em 18 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
+     "valor": 19.61,
+     "unidade": "ha",
+     "camada": null,
+     "filtro": null,
+     "fonte": "s2"
     }
    ],
    "volume_m3": {
@@ -165,7 +174,7 @@
     "p50": 1211.2,
     "p90": 2733.9
    },
-   "area_ha": 49.56
+   "area_ha": 29.95
   },
   {
    "codigo": "C",
@@ -600,7 +609,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T07:33:52+00:00",
+   "consultado_em": "2026-11-06T07:56:07+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },

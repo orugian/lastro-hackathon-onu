@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from contracts.models import CaseSummary, Dossier, Index
-from pipeline.export.caso import caso_documental, processar_caso
+from pipeline.export.caso import EscalaExcedida, caso_documental, processar_caso
 from pipeline.export.dados import ART, POLO, agora, dados
 
 LOG = logging.getLogger("lastro.export")
@@ -78,6 +78,7 @@ def main(argv=None):
     ap.add_argument("--so-docs", action="store_true")
     ap.add_argument("--autex", nargs="*")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--cbers-autex", nargs="*", default=[], help="recorta CBERS já na 1ª passada para estes AUTEX")
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     D = dados()
@@ -88,18 +89,24 @@ def main(argv=None):
         alvo = list(D.pre[D.pre.tipo == "POA"].autex.head(a.top)) + list(D.pre[D.pre.tipo != "POA"].autex.head(a.top_asv))
     feitos, falhas = {}, []
     with ThreadPoolExecutor(max_workers=a.workers) as pool:
-        futs = {pool.submit(processar_caso, x): x for x in alvo}
+        futs = {pool.submit(processar_caso, x, cbers=x in a.cbers_autex): x for x in alvo}
         for f in as_completed(futs):
             x = futs[f]
             try:
                 d = f.result()
                 feitos[x] = d
                 LOG.info("caso %s score=%.3f flags=%s", x, d.score, [(g.codigo, g.status) for g in d.flags])
+            except EscalaExcedida as exc:
+                d = caso_documental(x)
+                d.limitacoes.insert(0, f"Imagem não avaliada por escala: {exc}. Análise somente documental.")
+                (ART / "cases" / x / "dossier.json").write_text(json.dumps(d.model_dump(), ensure_ascii=False, indent=1), encoding="utf-8")
+                feitos[x] = d
+                LOG.warning("escala %s: %s", x, exc)
             except Exception as exc:
                 falhas.append({"autex": x, "erro": repr(exc)[:400]})
                 LOG.error("falha %s: %s\n%s", x, exc, traceback.format_exc())
     if a.cbers_top and feitos:
-        top = sorted(feitos.values(), key=lambda d: -d.score)[: a.cbers_top]
+        top = sorted([d for d in feitos.values() if d.analise_imagem], key=lambda d: -d.score)[: a.cbers_top]
         for d in top:
             try:
                 feitos[d.autex] = processar_caso(d.autex, cbers=True)

@@ -27,7 +27,7 @@
   "p90": 32092.1
  },
  "area_disturbio_ha": 66.73,
- "area_disturbio_fora_ha": 21.15,
+ "area_disturbio_fora_ha": 0.51,
  "n_arvores_declaradas": 4441,
  "flags": [
   {
@@ -40,9 +40,9 @@
   {
    "codigo": "B",
    "titulo": "Distúrbio sem declaração (dentro ou fora da UPA)",
-   "status": "indicio",
-   "severidade": "alta",
-   "confianca": 0.73
+   "status": "inconclusivo",
+   "severidade": "baixa",
+   "confianca": 0.64
   },
   {
    "codigo": "C",
@@ -73,10 +73,10 @@
    "confianca": 0.0
   }
  ],
- "score": 0.7275,
+ "score": 0.4345,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T07:37:04+00:00",
+ "processado_em": "2026-11-06T07:56:25+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -132,15 +132,15 @@
   {
    "codigo": "B",
    "titulo": "Distúrbio sem declaração (dentro ou fora da UPA)",
-   "status": "indicio",
-   "severidade": "alta",
-   "confianca": 0.73,
-   "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização (indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
+   "status": "inconclusivo",
+   "severidade": "baixa",
+   "confianca": 0.64,
+   "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização e adjacente (borda a ≤ 500 m da UPA; indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
    "evidencias": [
     {
      "tipo": "geometria",
-     "descricao": "21,1 ha de distúrbio em 22 polígono(s) fora da UPA, até 1.997 m do limite",
-     "valor": 21.15,
+     "descricao": "0,5 ha de distúrbio em 1 polígono(s) fora da UPA, até 146 m do limite",
+     "valor": 0.51,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": {
@@ -160,21 +160,17 @@
      "fonte": "s2"
     },
     {
-     "tipo": "documento",
-     "descricao": "1 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente CS_DESORDENADO de 2022-10-04",
-     "valor": 1.0,
-     "unidade": "alertas",
-     "camada": "deter",
+     "tipo": "texto",
+     "descricao": "Contexto regional (não computado): 20,6 ha de distúrbio em 21 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
+     "valor": 20.64,
+     "unidade": "ha",
+     "camada": null,
      "filtro": null,
-     "fonte": "deter"
+     "fonte": "s2"
     }
    ],
-   "volume_m3": {
-    "p10": 323.1,
-    "p50": 750.7,
-    "p90": 1768.6
-   },
-   "area_ha": 25.83
+   "volume_m3": null,
+   "area_ha": 5.19
   },
   {
    "codigo": "C",
@@ -609,7 +605,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T07:33:52+00:00",
+   "consultado_em": "2026-11-06T07:56:07+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },

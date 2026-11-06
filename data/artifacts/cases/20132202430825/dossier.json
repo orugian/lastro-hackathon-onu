@@ -22,19 +22,33 @@
  "volume_autorizado_m3": 75370.26,
  "volume_declarado_explorado_m3": 48002.21,
  "volume_estimado_m3": {
-  "p10": null,
-  "p50": null,
-  "p90": null
+  "p10": 14193.8,
+  "p50": 31416.8,
+  "p90": 70874.6
  },
- "area_disturbio_ha": null,
- "area_disturbio_fora_ha": null,
+ "area_disturbio_ha": 151.41,
+ "area_disturbio_fora_ha": 2.58,
  "n_arvores_declaradas": 8317,
  "flags": [
+  {
+   "codigo": "A",
+   "titulo": "Volume declarado sem lastro observável",
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.67
+  },
+  {
+   "codigo": "B",
+   "titulo": "Distúrbio sem declaração (dentro ou fora da UPA)",
+   "status": "indicio",
+   "severidade": "media",
+   "confianca": 0.76
+  },
   {
    "codigo": "C",
    "titulo": "Árvores declaradas fora do polígono",
    "status": "sem_indicio",
-   "severidade": "baixa",
+   "severidade": "info",
    "confianca": 0.95
   },
   {
@@ -50,19 +64,123 @@
    "status": "indicio",
    "severidade": "alta",
    "confianca": 0.95
+  },
+  {
+   "codigo": "F6",
+   "titulo": "Mudança sobre UC/TI/embargo",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0
   }
  ],
- "score": 0.4345,
+ "score": 0.6416,
  "source_mode": "real",
- "analise_imagem": false,
- "processado_em": "2026-11-06T07:32:54+00:00",
+ "analise_imagem": true,
+ "processado_em": "2026-11-06T08:00:05+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
+  {
+   "codigo": "A",
+   "titulo": "Volume declarado sem lastro observável",
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.67,
+   "regra": "Avaliado em blocos de 3×3 células (9 ha) e no total da UPA, onde a incerteza está calibrada (nunca por árvore ou célula isolada). Indício se (i) o volume declarado na UPA (IF100, células observáveis) supera o p90 do volume compatível com a imagem (Monte Carlo), ou (ii) os blocos com declarado > p90 do bloco somam excesso ≥ 10% do declarado e ≥ 50 m³ (limiar = p95 das UPAs de calibração sem indício).",
+   "evidencias": [
+    {
+     "tipo": "metrica",
+     "descricao": "18 de 414 blocos de 9 ha com volume declarado acima do p90 compatível com a imagem (130 células destacadas)",
+     "valor": 18.0,
+     "unidade": "blocos",
+     "camada": "celulas",
+     "filtro": {
+      "classe": "sem_lastro"
+     },
+     "fonte": "if100"
+    },
+    {
+     "tipo": "metrica",
+     "descricao": "Volume declarado nesses blocos: 4.360,3 m³; p90 compatível com a imagem: 3.741,8 m³",
+     "valor": 4360.3,
+     "unidade": "m³",
+     "camada": null,
+     "filtro": null,
+     "fonte": "if100"
+    },
+    {
+     "tipo": "metrica",
+     "descricao": "Excesso sem lastro = 618,6 m³ (1% do declarado em células observáveis; limiar 10%)",
+     "valor": 618.6,
+     "unidade": "m³",
+     "camada": null,
+     "filtro": null,
+     "fonte": "s2"
+    },
+    {
+     "tipo": "metrica",
+     "descricao": "Volume declarado na UPA (IF100, células observáveis): 47.975,2 m³; volume compatível com a imagem (Monte Carlo): p10 14.193,8 · p50 31.416,8 · p90 70.874,6 m³",
+     "valor": 47975.2,
+     "unidade": "m³",
+     "camada": null,
+     "filtro": null,
+     "fonte": "s2"
+    }
+   ],
+   "volume_m3": null,
+   "area_ha": null
+  },
+  {
+   "codigo": "B",
+   "titulo": "Distúrbio sem declaração (dentro ou fora da UPA)",
+   "status": "indicio",
+   "severidade": "media",
+   "confianca": 0.76,
+   "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização e adjacente (borda a ≤ 500 m da UPA; indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
+   "evidencias": [
+    {
+     "tipo": "geometria",
+     "descricao": "2,6 ha de distúrbio em 2 polígono(s) fora da UPA, até 505 m do limite",
+     "valor": 2.58,
+     "unidade": "ha",
+     "camada": "mudanca",
+     "filtro": {
+      "dentro_upa": false
+     },
+     "fonte": "s2"
+    },
+    {
+     "tipo": "geometria",
+     "descricao": "6,9 ha de distúrbio dentro da UPA em células sem árvore declarada (≥ 15% da célula)",
+     "valor": 6.91,
+     "unidade": "ha",
+     "camada": "celulas",
+     "filtro": {
+      "classe": "nao_declarado"
+     },
+     "fonte": "s2"
+    },
+    {
+     "tipo": "documento",
+     "descricao": "1 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente CS_DESORDENADO de 2026-07-05",
+     "valor": 1.0,
+     "unidade": "alertas",
+     "camada": "deter",
+     "filtro": null,
+     "fonte": "deter"
+    }
+   ],
+   "volume_m3": {
+    "p10": 242.3,
+    "p50": 561.3,
+    "p90": 1286.7
+   },
+   "area_ha": 9.49
+  },
   {
    "codigo": "C",
    "titulo": "Árvores declaradas fora do polígono",
    "status": "sem_indicio",
-   "severidade": "baixa",
+   "severidade": "info",
    "confianca": 0.95,
    "regra": "Coordenada IF100 a mais de 20 m e até 5 km fora do polígono autorizado (acima de 5 km: coordenada incoerente, tratada como limitação cadastral)",
    "evidencias": [],
@@ -142,16 +260,116 @@
      "camada": "arvores",
      "filtro": null,
      "fonte": "if100"
+    },
+    {
+     "tipo": "texto",
+     "descricao": "Imagem: Mudança observada entre 2025-10-05 e 2026-10-05; validade 2024-05-28 a 2026-04-19; área com distúrbio dentro do polígono 151,4 ha (relação com a validade: inconclusivo)",
+     "valor": null,
+     "unidade": null,
+     "camada": null,
+     "filtro": null,
+     "fonte": "s2"
+    }
+   ],
+   "volume_m3": null,
+   "area_ha": null
+  },
+  {
+   "codigo": "F6",
+   "titulo": "Mudança sobre UC/TI/embargo",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0,
+   "regra": "Polígono de mudança sobre Unidade de Conservação, Terra Indígena ou embargo (camadas oficiais)",
+   "evidencias": [
+    {
+     "tipo": "texto",
+     "descricao": "Camadas de UC/TI/embargo não integradas nesta versão.",
+     "valor": null,
+     "unidade": null,
+     "camada": null,
+     "filtro": null,
+     "fonte": null
     }
    ],
    "volume_m3": null,
    "area_ha": null
   }
  ],
- "imagens": [],
+ "imagens": [
+  {
+   "id": "s2_pre",
+   "sensor": "Sentinel-2",
+   "rotulo": "Sentinel-2 · mediana 2025-06-01 a 2025-10-05",
+   "data": "2025-06-01/2025-10-05",
+   "png": "img/s2_pre.png",
+   "bounds": [
+    -61.13458078930343,
+    -8.253453800474578,
+    -61.06969759837326,
+    -8.143686282206385
+   ],
+   "resolucao_m": 10.0,
+   "nuvem_pct": 0.0,
+   "par": "pre"
+  },
+  {
+   "id": "s2_pos",
+   "sensor": "Sentinel-2",
+   "rotulo": "Sentinel-2 · mediana 2026-06-01 a 2026-10-05",
+   "data": "2026-06-01/2026-10-05",
+   "png": "img/s2_pos.png",
+   "bounds": [
+    -61.13458078930343,
+    -8.253453800474578,
+    -61.06969759837326,
+    -8.143686282206385
+   ],
+   "resolucao_m": 10.0,
+   "nuvem_pct": 0.0,
+   "par": "pos"
+  },
+  {
+   "id": "dndvi",
+   "sensor": "Derivado",
+   "rotulo": "Queda de NDVI (pós − pré)",
+   "data": "2025-10-05/2026-10-05",
+   "png": "img/dndvi.png",
+   "bounds": [
+    -61.13458078930343,
+    -8.253453800474578,
+    -61.06969759837326,
+    -8.143686282206385
+   ],
+   "resolucao_m": 10.0,
+   "nuvem_pct": null,
+   "par": null
+  },
+  {
+   "id": "prob",
+   "sensor": "Modelo",
+   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM)",
+   "data": "2025-10-05/2026-10-05",
+   "png": "img/prob.png",
+   "bounds": [
+    -61.13458078930343,
+    -8.253453800474578,
+    -61.06969759837326,
+    -8.143686282206385
+   ],
+   "resolucao_m": 10.0,
+   "nuvem_pct": null,
+   "par": null
+  }
+ ],
  "camadas": [
   "upa",
-  "arvores"
+  "buffer",
+  "arvores",
+  "celulas",
+  "mudanca",
+  "deter",
+  "prodes"
  ],
  "especies": [
   {
@@ -227,6 +445,41 @@
  ],
  "parametros_volume": [
   {
+   "nome": "Volume por célula de 1 ha a partir da imagem",
+   "distribuicao": "quantis LightGBM q10/q50/q90 + ajuste conformal (CQR)",
+   "valor": 0.0,
+   "unidade": "m³/ha (ajuste conformal)",
+   "origem": "lgbm-quantil-v1+cqr · calibração IF100 em 72 UPAs sem indício"
+  },
+  {
+   "nome": "Fator comum de escala por UPA",
+   "distribuicao": "lognormal(0, 0.64)",
+   "valor": 0.6439152437199234,
+   "unidade": null,
+   "origem": "dispersão log declarado/estimado por UPA (validação cruzada)"
+  },
+  {
+   "nome": "Monte Carlo",
+   "distribuicao": "CDF linear por partes pelos quantis de cada célula",
+   "valor": 10000.0,
+   "unidade": "amostras",
+   "origem": "seed 0"
+  },
+  {
+   "nome": "Tolerância de borda",
+   "distribuicao": "fixo",
+   "valor": 20.0,
+   "unidade": "m",
+   "origem": "2 pixels Sentinel-2 / erro de GPS"
+  },
+  {
+   "nome": "Teto de intensidade",
+   "distribuicao": "fixo",
+   "valor": 30.0,
+   "unidade": "m³/ha",
+   "origem": "regra D"
+  },
+  {
    "nome": "Peso da flag A",
    "distribuicao": "fixo",
    "valor": 1.0,
@@ -277,7 +530,63 @@
   }
  ],
  "modelo": {
-  "score": "1 − exp(−Σ peso × severidade × confiança)"
+  "detector": "lightgbm-v1 (limiar 0.37)",
+  "calibracao": "lgbm-quantil-v1+cqr",
+  "score": "1 − exp(−Σ peso × severidade × confiança)",
+  "s2_meta": {
+   "crs": "EPSG:31980",
+   "n_cenas_pre": 284,
+   "n_cenas_pos": 300,
+   "n_cenas_limpas_pre": 73,
+   "n_cenas_limpas_pos": 93
+  },
+  "monte_carlo_upa": {
+   "upa": {
+    "p10": 14193.816992502045,
+    "p50": 31416.79925092562,
+    "p90": 70874.5937081818
+   },
+   "sem_lastro_excesso": {
+    "p10": 9425.580684078557,
+    "p50": 17432.440851118994,
+    "p90": 20951.58844629488
+   },
+   "nao_declarado": {
+    "p10": 128.59305556601015,
+    "p50": 299.3321126794743,
+    "p90": 683.5122947680661
+   },
+   "nao_declarado_fora": {
+    "p10": 113.68854342446215,
+    "p50": 261.9999196367918,
+    "p90": 603.1457697372679
+   },
+   "declarado_upa_m3": 47975.1774,
+   "prob_declarado_acima_estimado": 0.7464,
+   "n_celulas": 3325,
+   "sigma_upa": 0.6439152437199234
+  },
+  "celulas_por_classe": {
+   "consistente": 2492,
+   "sem_atividade": 681,
+   "sem_lastro": 130,
+   "nao_observavel": 28,
+   "nao_declarado": 22
+  },
+  "blocos_9ha": {
+   "n": 414,
+   "sem_lastro": 18,
+   "excesso_m3": 618.6,
+   "sigma_bloco": 0.9
+  },
+  "mascara_floresta": {
+   "frac_floresta_pre": 0.98841074401984,
+   "frac_nao_floresta_ndvi": 0.011589255980160026,
+   "px_excluidos_prodes": 0,
+   "ndvi_min": 0.7,
+   "ano_pre": 2025
+  },
+  "area_buffer_ha": 947.6
  },
  "proveniencia": [
   {
@@ -297,6 +606,30 @@
    "licenca": "Dados abertos"
   },
   {
+   "id": "s2",
+   "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
+   "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
+   "consultado_em": "2026-11-06T07:56:07+00:00",
+   "versao": null,
+   "licenca": "Copernicus open"
+  },
+  {
+   "id": "deter",
+   "fonte": "INPE DETER Amazônia (TerraBrasilis, deter-amz:deter_amz)",
+   "url": "https://terrabrasilis.dpi.inpe.br/geoserver/ows",
+   "consultado_em": "2026-11-06T03:23:19.818416+00:00",
+   "versao": null,
+   "licenca": "CC-BY-SA"
+  },
+  {
+   "id": "prodes",
+   "fonte": "INPE PRODES Amazônia Legal (TerraBrasilis, yearly_deforestation)",
+   "url": "https://terrabrasilis.dpi.inpe.br/geoserver/ows",
+   "consultado_em": "2026-11-06T03:24:38.952526+00:00",
+   "versao": null,
+   "licenca": "CC-BY-SA"
+  },
+  {
    "id": "if100",
    "fonte": "IBAMA - Volumes Explorados IF100 (Sinaflor)",
    "url": "https://dadosabertos.ibama.gov.br/dataset/volumes-explorados-if-100",
@@ -306,13 +639,43 @@
   }
  ],
  "limitacoes": [
-  "Análise somente documental (IF100 × autorização); imagem de satélite não processada para esta autorização."
+  "Autorização extensa (AOI com 2 km > 15 km de lado): entorno analisado reduzido a 500 m do limite.",
+  "A estação seca posterior ao período de interesse (2027) ainda não está disponível; usada a mais recente (2026).",
+  "Máscara de floresta: só conta distúrbio em pixel com NDVI pré ≥ 0.7 e fora de PRODES até 2025; 99% da AOI observável era floresta no pré.",
+  "Nuvem/sem dado: 28 de 3353 células da UPA (1%) não observáveis (classe nao_observavel); volume dessas células não entra na estimativa.",
+  "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
+  "Mapa de árvores amostrado: 8000 de 8317 pontos (todas as árvores fora da UPA e em células sem_lastro preservadas).",
+  "Janelas Sentinel-2: pré 2025-06-01 a 2025-10-05; pós 2026-06-01 a 2026-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 284 e 300.",
+  "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
+  "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
+  "Camadas de UC/TI/embargo não integradas: F6 não avaliado.",
+  "Calibração imagem→volume: lgbm-quantil-v1+cqr; o indício A é agregado por célula de 1 ha e por UPA, nunca por árvore."
  ],
  "linha_do_tempo": [
   {
    "data": "2024-05-28",
-   "evento": "Início da validade",
+   "evento": "Início da validade da POA",
    "fonte": "pamgia"
+  },
+  {
+   "data": "2025-06-01",
+   "evento": "Início da janela Sentinel-2 pré (2025-06-01 a 2025-10-05)",
+   "fonte": "s2"
+  },
+  {
+   "data": "2025-08-10",
+   "evento": "Alerta DETER CS_GEOMETRICO dentro da autorização",
+   "fonte": "deter"
+  },
+  {
+   "data": "2025-09-13",
+   "evento": "Alerta DETER CS_GEOMETRICO dentro da autorização",
+   "fonte": "deter"
+  },
+  {
+   "data": "2025-09-13",
+   "evento": "Alerta DETER CS_GEOMETRICO dentro da autorização",
+   "fonte": "deter"
   },
   {
    "data": "2025-11-28",
@@ -323,6 +686,31 @@
    "data": "2026-04-19",
    "evento": "Fim da validade",
    "fonte": "pamgia"
+  },
+  {
+   "data": "2026-06-01",
+   "evento": "Início da janela Sentinel-2 pós (2026-06-01 a 2026-10-05)",
+   "fonte": "s2"
+  },
+  {
+   "data": "2026-07-05",
+   "evento": "Alerta DETER CS_DESORDENADO dentro da autorização",
+   "fonte": "deter"
+  },
+  {
+   "data": "2026-08-19",
+   "evento": "Alerta DETER DEGRADACAO dentro da autorização",
+   "fonte": "deter"
+  },
+  {
+   "data": "2026-08-19",
+   "evento": "3 alerta(s) DETER no entorno de 2 km desde 2022-10-04; mais recente nesta data (proximidade não implica vínculo)",
+   "fonte": "deter"
+  },
+  {
+   "data": "2026-09-08",
+   "evento": "Alerta DETER DEGRADACAO dentro da autorização",
+   "fonte": "deter"
   },
   {
    "data": "2026-11-04",

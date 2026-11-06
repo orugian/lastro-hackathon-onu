@@ -34,7 +34,7 @@
    "codigo": "C",
    "titulo": "Árvores declaradas fora do polígono",
    "status": "sem_indicio",
-   "severidade": "baixa",
+   "severidade": "info",
    "confianca": 0.95
   },
   {
@@ -55,14 +55,14 @@
  "score": 0.4345,
  "source_mode": "real",
  "analise_imagem": false,
- "processado_em": "2026-11-06T07:32:15+00:00",
+ "processado_em": "2026-11-06T07:55:21+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
    "codigo": "C",
    "titulo": "Árvores declaradas fora do polígono",
    "status": "sem_indicio",
-   "severidade": "baixa",
+   "severidade": "info",
    "confianca": 0.95,
    "regra": "Coordenada IF100 a mais de 20 m e até 5 km fora do polígono autorizado (acima de 5 km: coordenada incoerente, tratada como limitação cadastral)",
    "evidencias": [],

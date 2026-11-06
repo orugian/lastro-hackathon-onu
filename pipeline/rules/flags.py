@@ -22,6 +22,7 @@ AREA_MIN_B_HA = 1.0        # área somada mínima para indício B
 AREA_MIN_POLIGONO_HA = 0.5  # polígono mínimo fora da UPA
 B_SANITY_X_AUT = 3.0        # área fora > 3 × autorizada -> inconclusivo (possível artefato)
 B_SANITY_FRAC_BUFFER = 0.30 # área fora > 30% do buffer -> inconclusivo
+B_ADJACENCIA_M = 500.0      # polígono fora conta para B só se a borda mais próxima estiver a ≤ 500 m da UPA
 F2_TOLERANCIA = 1.05
 A_BLOCO_MIN = 5
 A_FRAC_MIN = 0.10
@@ -201,14 +202,17 @@ def flag_B(mudanca, celulas, deter_aoi, mc: Optional[dict], tipo: str = "POA", v
            area_upa_ha: Optional[float] = None, area_buffer_ha: Optional[float] = None) -> Flag:
     """mudanca: polígonos com area_ha, prob, dentro_upa, dist_limite_m, coberto_outra (bool)."""
     regra = (f"Polígono de distúrbio (prob média ≥ {PROB_MIN_B}, ≥ {AREA_MIN_POLIGONO_HA} ha, sobre floresta no pré) fora da UPA, a mais de {TOL_BORDA_M:.0f} m do limite e não coberto por outra autorização "
-             f"(indício se ≥ {AREA_MIN_B_HA:.0f} ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada "
+             f"e adjacente (borda a ≤ {B_ADJACENCIA_M:.0f} m da UPA; indício se ≥ {AREA_MIN_B_HA:.0f} ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada "
              f"(indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). "
              f"Sanidade: área fora > {B_SANITY_X_AUT:.0f}× a autorizada ou > {B_SANITY_FRAC_BUFFER:.0%} do buffer -> inconclusivo.")
     if mudanca is None:
         return _flag("B", "nao_avaliado", "info", 0.0, regra, [Evidencia(tipo="texto", descricao="Imagem não processada para este caso.")], tipo=tipo)
     m = mudanca
-    fora = m[(~m["dentro_upa"].astype(bool)) & (m["dist_limite_m"] > TOL_BORDA_M) & (m["prob"] >= PROB_MIN_B) & (m["area_ha"] >= AREA_MIN_POLIGONO_HA)
+    cand = m[(~m["dentro_upa"].astype(bool)) & (m["dist_limite_m"] > TOL_BORDA_M) & (m["prob"] >= PROB_MIN_B) & (m["area_ha"] >= AREA_MIN_POLIGONO_HA)
              & (~m.get("coberto_outra", pd.Series(False, index=m.index)).astype(bool))] if len(m) else m
+    dmin = cand["dist_min_m"] if "dist_min_m" in cand else pd.Series(0.0, index=cand.index)
+    fora = cand[dmin <= B_ADJACENCIA_M]
+    regional = cand[dmin > B_ADJACENCIA_M]
     a_fora = float(fora["area_ha"].sum()) if len(fora) else 0.0
     a_nd = 0.0
     if tipo == "POA" and celulas is not None and len(celulas):
@@ -222,6 +226,10 @@ def flag_B(mudanca, celulas, deter_aoi, mc: Optional[dict], tipo: str = "POA", v
     if a_nd > 0:
         ev.append(Evidencia(tipo="geometria", descricao=f"{_fmt(a_nd)} ha de distúrbio dentro da UPA em células sem árvore declarada (≥ 15% da célula)",
                             valor=round(a_nd, 2), unidade="ha", camada="celulas", filtro={"classe": "nao_declarado"}, fonte="s2"))
+    if len(regional):
+        ev.append(Evidencia(tipo="texto", descricao=(f"Contexto regional (não computado): {_fmt(float(regional['area_ha'].sum()))} ha de distúrbio em "
+                                                     f"{len(regional)} polígono(s) a mais de {B_ADJACENCIA_M:.0f} m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização"),
+                            valor=round(float(regional["area_ha"].sum()), 2), unidade="ha", fonte="s2"))
     if deter_aoi is not None and len(deter_aoi) and len(fora):
         try:
             hit = deter_aoi[deter_aoi.intersects(fora.to_crs(deter_aoi.crs).union_all())]
@@ -305,12 +313,26 @@ def flag_D_poa(doc: dict, area_ha: Optional[float]) -> Flag:
     return _flag("D", st, sev, 0.9 if st != "nao_avaliado" else 0.0, regra, ev)
 
 
-def flag_D_asv(vol_est: Optional[dict], vol_aut: Optional[float]) -> Flag:
-    regra = "p10 do volume estimado (área desmatada × estoque/ha, Monte Carlo) > volume autorizado"
+def area_suspeita(area_ha, area_aut_ha, area_buffer_ha) -> bool:
+    """Sanidade: área de mudança > 3× a autorizada ou > 30% do buffer -> provável artefato/desmatamento regional."""
+    return bool((_isnum(area_aut_ha) and _isnum(area_ha) and area_ha > B_SANITY_X_AUT * area_aut_ha)
+                or (_isnum(area_buffer_ha) and _isnum(area_ha) and area_ha > B_SANITY_FRAC_BUFFER * area_buffer_ha))
+
+
+TXT_SUSPEITO = ("Área desmatada estimada excede {x:.0f}× a autorizada ou {f:.0%} do buffer: possível artefato de composição sazonal/nuvem "
+                "ou desmatamento pré-existente; requer verificação visual.")
+
+
+def flag_D_asv(vol_est: Optional[dict], vol_aut: Optional[float], suspeito: bool = False) -> Flag:
+    regra = ("p10 do volume estimado (área desmatada × estoque/ha, Monte Carlo) > volume autorizado; "
+             f"área desmatada > {B_SANITY_X_AUT:.0f}× a autorizada ou > {B_SANITY_FRAC_BUFFER:.0%} do buffer -> inconclusivo")
     if not _isnum(vol_aut) or not vol_est or not _isnum(vol_est.get("p10")):
         return _flag("D", "nao_avaliado", "info", 0.0, regra, [Evidencia(tipo="texto", descricao="Volume autorizado ou estoque por hectare indisponível; volume não estimado.")], tipo="ASV")
     ev = [Evidencia(tipo="metrica", descricao=f"Volume estimado p10 {_fmt(vol_est['p10'])} · p50 {_fmt(vol_est['p50'])} · p90 {_fmt(vol_est['p90'])} m³ para {_fmt(vol_aut)} m³ autorizados",
                     valor=round(float(vol_est["p50"]), 1), unidade="m³", fonte="s2")]
+    if suspeito:
+        ev.append(Evidencia(tipo="texto", descricao=TXT_SUSPEITO.format(x=B_SANITY_X_AUT, f=B_SANITY_FRAC_BUFFER)))
+        return _flag("D", "inconclusivo", "baixa", 0.3, regra, ev, vol=vol_est, tipo="ASV")
     if vol_est["p10"] > vol_aut:
         return _flag("D", "indicio", "media", 0.7, regra, ev, vol=vol_est, tipo="ASV")
     return _flag("D", "sem_indicio", "info", 0.7, regra, ev, vol=vol_est, tipo="ASV")
@@ -368,12 +390,16 @@ def flag_E_imagem(area_dentro_ha: Optional[float], janela_pre: tuple[str, str], 
 
 
 # ------------------------------------------------------------------ F2 / F6
-def flag_F2(area_desmatada_ha: Optional[float], area_autorizada_ha: Optional[float]) -> Flag:
-    regra = f"Σ área desmatada (dentro + contígua até 100 m do limite) > área autorizada × {F2_TOLERANCIA:.2f}"
+def flag_F2(area_desmatada_ha: Optional[float], area_autorizada_ha: Optional[float], area_buffer_ha: Optional[float] = None) -> Flag:
+    regra = (f"Σ área desmatada (dentro + polígonos contíguos, até 500 m do limite) > área autorizada × {F2_TOLERANCIA:.2f}; "
+             f"> {B_SANITY_X_AUT:.0f}× a autorizada ou > {B_SANITY_FRAC_BUFFER:.0%} do buffer -> inconclusivo (sanidade)")
     if not _isnum(area_desmatada_ha) or not _isnum(area_autorizada_ha) or area_autorizada_ha <= 0:
         return _flag("F2", "nao_avaliado", "info", 0.0, regra, [Evidencia(tipo="texto", descricao="Área desmatada ou autorizada indisponível.")], tipo="ASV")
     ev = [Evidencia(tipo="metrica", descricao=f"{_fmt(area_desmatada_ha)} ha desmatados para {_fmt(area_autorizada_ha)} ha autorizados",
                     valor=round(float(area_desmatada_ha), 2), unidade="ha", camada="mudanca", fonte="s2")]
+    if area_suspeita(area_desmatada_ha, area_autorizada_ha, area_buffer_ha):
+        ev.append(Evidencia(tipo="texto", descricao=TXT_SUSPEITO.format(x=B_SANITY_X_AUT, f=B_SANITY_FRAC_BUFFER)))
+        return _flag("F2", "inconclusivo", "baixa", 0.3, regra, ev, area=round(area_desmatada_ha, 2), tipo="ASV")
     if area_desmatada_ha > area_autorizada_ha * F2_TOLERANCIA:
         r = area_desmatada_ha / area_autorizada_ha
         return _flag("F2", "indicio", "alta" if r > 1.25 else "media", 0.8, regra, ev, area=round(area_desmatada_ha, 2), tipo="ASV")

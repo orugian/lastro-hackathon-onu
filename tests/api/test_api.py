@@ -159,3 +159,19 @@ def test_spa_and_cors(tmp_path):
         response = client.options("/api/analyze/NOVA", headers={
             "Origin": "http://localhost:5173", "Access-Control-Request-Method": "POST"})
         assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+def test_metrics_dl_e_html_imprimivel(client):
+    assert client.get("/api/metrics/dl").status_code in (200, 404)
+    html = client.get(f"/api/cases/{AUTEX}/dossier.html").text
+    for trecho in ("Volumes (m³)", "p10", "Flags", "Limitações", "Proveniência", "img/s2_pre.png", "img/s2_pos.png", "Regra:"):
+        assert trecho in html
+
+
+def test_autex_fora_do_polo(tmp_path):
+    (tmp_path / "index.json").write_text((MOCK / "index.json").read_text(encoding="utf-8"), encoding="utf-8")
+    with TestClient(create_app(tmp_path)) as client:
+        r = client.get("/api/cases/99999999999999")
+        assert r.status_code == 404 and r.json()["detail"] == "Autorização não encontrada no polo processado"
+        job = client.post("/api/analyze/99999999999999").json()
+        assert job["status"] == "error" and job["mensagem"] == "Autorização não encontrada no polo processado"

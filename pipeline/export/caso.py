@@ -23,6 +23,18 @@ from pipeline.rules.score import parametros_score, score
 LOG = logging.getLogger(__name__)
 RING_CELULAS_M = 500.0
 BUFFER_AOI_M = 2000.0
+BUFFER_REDUZIDO_M = 500.0
+MAX_AOI_KM = 15.0          # lado máximo da AOI com buffer de 2 km; acima disso usa 500 m
+MAX_AOI_ESCALA_KM = 30.0   # acima disso, imagem não avaliada por escala (caso segue só documental)
+
+
+class EscalaExcedida(RuntimeError):
+    pass
+
+
+def _lado_km(geom_u) -> float:
+    minx, miny, maxx, maxy = geom_u.bounds
+    return max(maxx - minx, maxy - miny) / 1000.0
 MAX_ARVORES = 8000
 HOJE = date.today()
 
@@ -127,15 +139,16 @@ def poligonos_mudanca(g, upa_u, outras_u, crs, pre, pos):
             if part.is_empty or part.area < 1000:  # < 0,1 ha
                 continue
             if dentro:
-                dist, cob = 0.0, False
+                dist, dmin, cob = 0.0, 0.0, False
             else:
                 pts = shapely.points(shapely.get_coordinates(part))
                 dist = float(shapely.distance(pts, upa_u).max())
+                dmin = float(part.distance(upa_u))
                 cob = bool(outras_u is not None and part.intersection(outras_u).area > 0.5 * part.area)
             rows.append(dict(geometry=part, area_ha=part.area / 1e4, prob=float(r["prob"]), dentro_upa=dentro,
-                             dist_limite_m=round(dist, 1), coberto_outra=cob))
+                             dist_limite_m=round(dist, 1), dist_min_m=round(dmin, 1), coberto_outra=cob))
     m = gpd.GeoDataFrame(rows, geometry="geometry", crs=crs) if rows else gpd.GeoDataFrame(
-        {"area_ha": [], "prob": [], "dentro_upa": [], "dist_limite_m": [], "coberto_outra": []}, geometry=[], crs=crs)
+        {"area_ha": [], "prob": [], "dentro_upa": [], "dist_limite_m": [], "dist_min_m": [], "coberto_outra": []}, geometry=[], crs=crs)
     m["id"] = [str(i + 1) for i in range(len(m))]
     m["data_inicio"], m["data_fim"], m["metodo"] = pre[1], pos[1], "lightgbm"
     m["area_ha"] = m["area_ha"].round(3)
@@ -172,14 +185,22 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     geom = a.geometry.buffer(0)
     crs = utm(geom)
     upa_u = gpd.GeoSeries([geom], crs=4326).to_crs(crs).iloc[0].buffer(0)
-    aoi_u = upa_u.buffer(BUFFER_AOI_M)
+    limit_escala = []
+    buf_m = BUFFER_AOI_M
+    aoi_u = upa_u.buffer(buf_m)
+    if _lado_km(aoi_u) > MAX_AOI_KM:
+        buf_m = BUFFER_REDUZIDO_M
+        aoi_u = upa_u.buffer(buf_m)
+        limit_escala.append(f"Autorização extensa (AOI com 2 km > {MAX_AOI_KM:.0f} km de lado): entorno analisado reduzido a {buf_m:.0f} m do limite.")
+    if _lado_km(aoi_u) > MAX_AOI_ESCALA_KM:
+        raise EscalaExcedida(f"AOI com {_lado_km(aoi_u):.0f} km de lado excede {MAX_AOI_ESCALA_KM:.0f} km")
     aoi_4326 = gpd.GeoSeries([aoi_u], crs=crs).to_crs(4326).iloc[0].buffer(0)
     viz = D.aut[D.aut.intersects(aoi_4326) & (D.aut.autex != autex)]
     outras_u = gpd.GeoSeries(viz.geometry, crs=4326).to_crs(crs).buffer(0).union_all() if len(viz) else None
     buffer_u = upa_u.union(aoi_u.difference(outras_u)) if outras_u is not None else aoi_u
     case = out_root / "cases" / autex
     (case / "img").mkdir(parents=True, exist_ok=True)
-    limit, timeline, camadas, imagens = [], [], [], []
+    limit, timeline, camadas, imagens = list(limit_escala), [], [], []
     area_aut = nn(a.get("area_ha"))
     val_ini, val_fim = nn(a.get("validade_ini")), nn(a.get("validade_fim"))
     arv = D.arvores(autex)
@@ -219,7 +240,7 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     mud = poligonos_mudanca(vetorizar_mudanca(probf, limiar_detector()), upa_u, outras_u, crs, pre, pos)
     area_dentro = float(mud.loc[mud.dentro_upa.astype(bool), "area_ha"].sum()) if len(mud) else 0.0
     fora_ok = mud[(~mud.dentro_upa.astype(bool)) & (mud.dist_limite_m > F.TOL_BORDA_M) & (mud.prob >= F.PROB_MIN_B)
-                  & (mud.area_ha >= F.AREA_MIN_POLIGONO_HA) & (~mud.coberto_outra.astype(bool))] if len(mud) else mud
+                  & (mud.area_ha >= F.AREA_MIN_POLIGONO_HA) & (~mud.coberto_outra.astype(bool)) & (mud.dist_min_m <= F.B_ADJACENCIA_M)] if len(mud) else mud
     area_fora = float(fora_ok["area_ha"].sum()) if len(fora_ok) else 0.0
     area_buffer_ha = float(buffer_u.difference(upa_u).area / 1e4)
     limit.append(f"Máscara de floresta: só conta distúrbio em pixel com NDVI pré ≥ {flo['ndvi_min']} e fora de PRODES até {flo['ano_pre']}; "
@@ -308,8 +329,9 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
         fl.append(fe)
     else:
         fl = [F.flag_B(mud_valid, None, deter_u, None, tipo, vol_fora=vol_fora, area_upa_ha=area_aut, area_buffer_ha=area_buffer_ha),
-              F.flag_F2(area_desm, area_aut),
-              F.flag_D_asv(vol_est if vol_est.get("p10") is not None else None, nn(doc.get("volume_autorizado_m3"))),
+              F.flag_F2(area_desm, area_aut, area_buffer_ha),
+              F.flag_D_asv(vol_est if vol_est.get("p10") is not None else None, nn(doc.get("volume_autorizado_m3")),
+                           suspeito=F.area_suspeita(area_desm, area_aut, area_buffer_ha)),
               F.flag_E_imagem(area_dentro, pre, pos, (val_ini, val_fim), tipo)]
     fl.append(F.flag_F6(None, False, tipo))
     sc = score(fl)
@@ -363,7 +385,7 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     p("Exportando camadas", 0.93)
     upa_g = gpd.GeoDataFrame({"autex": [autex], "tipo": [tipo], "area_ha": [area_aut]}, geometry=[geom], crs=4326)
     escrever_fc(case / "upa.geojson", upa_g, ["autex", "tipo", "area_ha"])
-    escrever_fc(case / "buffer.geojson", gpd.GeoDataFrame({"descricao": ["UPA + 2 km, menos outras autorizações"]}, geometry=[buffer_u], crs=crs), ["descricao"], 5)
+    escrever_fc(case / "buffer.geojson", gpd.GeoDataFrame({"descricao": [f"UPA + {buf_m/1000:g} km, menos outras autorizações"]}, geometry=[buffer_u], crs=crs), ["descricao"], 5)
     camadas += ["upa", "buffer"]
     if tipo == "POA":
         sl = cel[cel.classe == "sem_lastro"]
@@ -381,7 +403,7 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
         escrever_fc(case / "celulas.geojson", cc, ["id", "vol_declarado", "n_arvores", "disturbio_frac", "vol_p10", "vol_p50", "vol_p90", "classe", "dentro_upa", "frac_valida"], None)
         camadas.append("celulas")
         cel.drop(columns="geometry").to_parquet(IMG / autex / "celulas.parquet")
-    escrever_fc(case / "mudanca.geojson", mud, ["id", "area_ha", "prob", "dentro_upa", "dist_limite_m", "data_inicio", "data_fim", "metodo", "coberto_outra"], 2)
+    escrever_fc(case / "mudanca.geojson", mud, ["id", "area_ha", "prob", "dentro_upa", "dist_limite_m", "dist_min_m", "data_inicio", "data_fim", "metodo", "coberto_outra"], 2)
     escrever_fc(case / "deter.geojson", deter_aoi, ["classe", "data", "gid"], 5)
     escrever_fc(case / "prodes.geojson", prodes_aoi, ["classe", "ano", "image_date", "main_class"], 5)
     camadas += ["mudanca", "deter", "prodes"]

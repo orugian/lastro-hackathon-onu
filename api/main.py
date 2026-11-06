@@ -25,11 +25,14 @@ from starlette.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from contracts.models import Dossier, Index, MetricsCalibracao, MetricsDetector, SCHEMA_VERSION
+from api.dossier_html import render as render_dossier_html
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 LIVE_TIMEOUT = 90.0
 UNAVAILABLE = "Análise ao vivo indisponível; exibindo dados em cache"
 NOTICE = "Resultado experimental de triagem. Não constitui prova nem auto de infração."
+NOT_IN_POLO = "Autorização não encontrada no polo processado"
+AUTORIZACOES = PROJECT_ROOT / "data/processed/autorizacoes.parquet"
 logger = logging.getLogger(__name__)
 
 
@@ -111,8 +114,28 @@ def create_app(artifacts_root=None, dist_root=None):
     app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173"],
                        allow_methods=["GET", "POST"], allow_headers=["*"])
 
+    polo_cache = {}
+
+    def autex_no_polo(autex):
+        """None se a verificação não se aplica (mock/sem parquet); senão True/False."""
+        if artifacts.root.name == "artifacts-mock" or not AUTORIZACOES.is_file():
+            return None
+        if "ids" not in polo_cache:
+            try:
+                import pyarrow.parquet as pq
+                polo_cache["ids"] = set(map(str, pq.read_table(AUTORIZACOES, columns=["autex"]).column("autex").to_pylist()))
+            except Exception:
+                polo_cache["ids"] = None
+        ids = polo_cache["ids"]
+        return None if ids is None else (autex in ids or autex.startswith("SIM-"))
+
     def dossier(autex):
-        return artifacts.read("cases", safe_name(autex), "dossier.json", model=Dossier)
+        try:
+            return artifacts.read("cases", safe_name(autex), "dossier.json", model=Dossier)
+        except HTTPException as exc:
+            if exc.status_code == 404 and autex_no_polo(autex) is False:
+                raise HTTPException(404, NOT_IN_POLO) from None
+            raise
 
     @app.get("/api/health")
     def health():
@@ -160,20 +183,14 @@ def create_app(artifacts_root=None, dist_root=None):
 
     @app.get("/api/metrics/{nome}")
     def metrics(nome: str):
-        models = {"detector": MetricsDetector, "calibracao": MetricsCalibracao, "montecarlo": None}
+        models = {"detector": MetricsDetector, "calibracao": MetricsCalibracao, "montecarlo": None, "dl": None}
         if nome not in models:
             raise HTTPException(404, "Métrica não encontrada")
         return artifacts.read("metrics", nome + ".json", model=models[nome])
 
     @app.get("/api/cases/{autex}/dossier.html", response_class=HTMLResponse)
     def printable(autex: str):
-        case = dossier(autex)
-        content = escape(case.model_dump_json(indent=2))
-        return ("<!doctype html><html lang='pt-BR'><meta charset='utf-8'>"
-                "<title>Dossiê Lastro</title><style>body{font:16px sans-serif;margin:2rem}"
-                "aside{border:3px solid;padding:1rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}"
-                "</style><h1>Lastro — " + escape(case.autex) + "</h1><aside><strong>" +
-                NOTICE + "</strong></aside><h2>Dossiê de triagem</h2><pre>" + content + "</pre></html>")
+        return render_dossier_html(dossier(autex))
 
     async def run_job(job_id, autex):
         job = jobs[job_id]
@@ -220,6 +237,10 @@ def create_app(artifacts_root=None, dist_root=None):
         safe_name(autex)
         job_id = uuid4().hex
         job = dict(status="queued", etapa="Na fila", progresso=0)
+        if autex_no_polo(autex) is False:
+            job.update(status="error", etapa=NOT_IN_POLO, mensagem=NOT_IN_POLO)
+            jobs[job_id] = job
+            return {"job_id": job_id, **deepcopy(job)}
         try:
             cached = dossier(autex)
         except HTTPException as exc:
