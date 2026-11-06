@@ -10,3 +10,5 @@ agentes/logs/
 *.tif
 !data/artifacts/**/*.tif
 .env
+pytest-of-orugi/
+web/.taste-skill/

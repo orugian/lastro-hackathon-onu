@@ -1,122 +1,18 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+﻿import {useEffect,useMemo,useState} from 'react'
+import type {CaseSummary,Dossier,Evidencia,Index,MetricsCalibracao,MetricsDetector} from './types'
+import {number,percent,status,staticMode,useData} from './data'
+import {ComparisonMap,OverviewMap} from './Maps'
+import {CalibrationChart,VolumeChart} from './Charts'
+import {AnalyzeModal} from './AnalyzeModal'
 import './App.css'
+const totalLabels:Record<string,string>={autorizacoes_avaliadas:'autorizações avaliadas',com_imagem:'com imagem',com_indicio:'com indício',arvores_if100:'árvores IF100'}
+const warning='Resultado experimental de triagem — não constitui prova nem auto de infração'
+function Icon({kind='tree'}:{kind?:string}){return <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">{kind==='image'?<><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m4 17 5-5 4 4 3-3 5 5M16 8h.01"/></>:<><path d="m12 2-6 8h3l-5 7h6v5h4v-5h6l-5-7h3Z"/></>}</svg>}
+function State({error,retry}:{error?:string;retry:()=>void}){return <div className="state" role={error?'alert':'status'}><h2>{error?'Dados indisponíveis':'Carregando observações…'}</h2><p>{error??'Consultando autorizações e evidências.'}</p>{error&&<button onClick={retry}>Tentar novamente</button>}</div>}
+function Badge({simulated}:{simulated:boolean}){return simulated?<span className="simulation">SIMULAÇÃO</span>:null}
+function CaseRow({c,index}:{c:CaseSummary;index:number}){return <a className="case-row" href={`#/caso/${encodeURIComponent(c.autex)}`}><div className="row-top"><span className="rank">{index+1}</span><code>{c.autex}</code><span className="type">{c.tipo}</span></div><div className="row-top"><span>{c.municipio} / {c.uf}</span><b className={c.score>=70?'high':''}>{number(c.score)}<small>/100</small></b></div><div className="score-track"><span style={{width:`${Math.min(100,c.score)}%`,background:c.score>=70?'#991b1b':c.score>=40?'#a56920':'#608557'}}/></div><div className="chips">{c.flags.filter(f=>f.status==='indicio').map(f=><span title={f.titulo} key={f.codigo}>{f.codigo} · Indício</span>)}{!c.flags.some(f=>f.status==='indicio')&&<span>Sem indício identificado</span>}</div><div className="volumes"><span>Autorizado<b>{number(c.volume_autorizado_m3)}</b></span><span>Declarado<b>{number(c.volume_declarado_explorado_m3)}</b></span><span>Estimado p50<b>{number(c.volume_estimado_m3.p50)}</b></span></div><div className="row-bottom"><span><Icon kind="image"/>{c.analise_imagem?'Imagem analisada':'Imagem não avaliada'}</span><span>Volumes em m³ · Ver dossiê →</span></div></a>}
+function Triage(){const {data,error,retry}=useData<Index>('/index');const [uf,setUf]=useState(''),[tipo,setTipo]=useState(''),[flag,setFlag]=useState(''),[image,setImage]=useState(false);const cases=useMemo(()=>data?.casos.filter(c=>(!uf||c.uf===uf)&&(!tipo||c.tipo===tipo)&&(!flag||c.flags.some(f=>f.codigo===flag&&f.status==='indicio'))&&(!image||c.analise_imagem)).sort((a,b)=>b.score-a.score)??[],[data,uf,tipo,flag,image]);if(!data)return <State error={error} retry={retry}/>;return <main className="triage"><div className="page-heading"><div><h1>Triagem territorial</h1><p>Priorize a fiscalização a partir de divergências entre declaração e floresta.</p></div><div className="source-note"><Badge simulated={data.casos.some(c=>c.source_mode==='simulado')}/><span>{staticMode?'Acervo local de demonstração':'Dados da API'} · {data.polo}</span></div></div><div className="totals">{Object.entries(data.totais).map(([k,v])=><span key={k}><strong>{number(v)}</strong> {totalLabels[k]??k.replaceAll('_',' ')}</span>)}</div><div className="filter-bar"><span>Filtrar autorizações</span><label>UF <select value={uf} onChange={e=>setUf(e.target.value)}><option value="">Todas</option>{[...new Set(data.casos.map(c=>c.uf))].sort().map(v=><option key={v}>{v}</option>)}</select></label><label>Regime <select value={tipo} onChange={e=>setTipo(e.target.value)}><option value="">Todos</option>{['POA','ASV','UAS'].map(v=><option key={v}>{v}</option>)}</select></label><label>Indício <select value={flag} onChange={e=>setFlag(e.target.value)}><option value="">Todos</option>{[...new Set(data.casos.flatMap(c=>c.flags.map(f=>f.codigo)))].map(v=><option key={v}>{v}</option>)}</select></label><label><input type="checkbox" checked={image} onChange={e=>setImage(e.target.checked)}/> Só com imagem</label><button className="text-button" onClick={()=>{setUf('');setTipo('');setFlag('');setImage(false)}}>Limpar filtros</button></div><div className="triage-grid"><OverviewMap cases={cases}/><aside className="ranked-list"><div className="list-heading"><h2>Prioridade de fiscalização</h2><span>{cases.length} autorizações · maior score primeiro</span></div>{cases.map((c,i)=><CaseRow key={c.autex} c={c} index={i}/>)}{!cases.length&&<div className="empty">Nenhuma autorização corresponde aos filtros. Limpe os filtros para ampliar a busca.</div>}</aside></div></main>}
+function DossierPage({autex}:{autex:string}){const {data:d,error,retry}=useData<Dossier>(`/cases/${encodeURIComponent(autex)}`);const [focus,setFocus]=useState<Evidencia>();if(!d)return <State error={error} retry={retry}/>;return <main className="dossier"><div className="page-heading"><div><a className="back" href="#/">← Triagem territorial</a><h1>Dossiê <code>{d.autex}</code></h1><p>{d.tipo==='POA'?'Manejo seletivo · POA / PMFS':'Corte raso · '+d.tipo} · {d.municipio} / {d.uf} · {number(d.area_autorizada_ha)} ha</p></div><div className="dossier-actions"><Badge simulated={d.source_mode==='simulado'}/>{staticMode?<button onClick={()=>window.print()}>Dossiê imprimível</button>:<a className="button" target="_blank" rel="noreferrer" href={`/api/cases/${encodeURIComponent(d.autex)}/dossier.html`}>Dossiê imprimível ↗</a>}</div></div><div className="dossier-notice">{warning}</div><div className="dossier-grid"><div className="map-column"><ComparisonMap dossier={d} focus={focus}/><section className="timeline"><h2>Linha do tempo</h2><ol>{d.linha_do_tempo.map((e,i)=><li key={i}><time>{e.data}</time><span>{e.evento}</span><small>{e.fonte}</small></li>)}</ol>{!d.linha_do_tempo.length&&<p>Nenhum evento disponível.</p>}</section><section><h2>Limitações desta análise</h2><ul>{d.limitacoes.map(l=><li key={l}>{l}</li>)}</ul>{!d.limitacoes.length&&<p>Limitações não informadas na fonte.</p>}</section><section><h2>Proveniência</h2>{d.proveniencia.map(p=><div className="provenance" key={p.id}><a href={/^https?:\/\//.test(p.url)?p.url:undefined} target="_blank" rel="noreferrer">{p.fonte} ↗</a><span>{p.consultado_em} · {p.versao??'Versão não informada'} · {p.licenca}</span></div>)}</section></div><aside className="dossier-panel"><section><div className="title-row"><h2>Lastro de volume</h2><strong className="score-number">{number(d.score)}<small>/100</small></strong></div><p className="caption">Score de prioridade · não é probabilidade de infração</p><VolumeChart data={d}/><p className="caption">Estimativa p50; intervalo p10–p90: {number(d.volume_estimado_m3.p10)}–{number(d.volume_estimado_m3.p90)} m³.</p><dl className="facts"><div><dt>Validade</dt><dd>{d.validade.inicio??'Não informada'} → {d.validade.fim??'Não informada'}</dd></div><div><dt>Situação</dt><dd>{d.situacao??'Não informada'}</dd></div><div><dt>Árvores declaradas</dt><dd>{number(d.n_arvores_declaradas)}</dd></div></dl></section><section><h2>Indícios e evidências</h2><p className="caption">Abra uma regra para inspecionar suas evidências no mapa.</p>{d.flags_detalhe.map(f=><details className="flag" key={f.codigo}><summary><span className={`flag-code ${f.status==='indicio'?'attention':''}`}>{f.codigo}</span><span><b>{f.titulo}</b><small>{status[f.status]} · severidade {f.severidade} · confiança {percent(f.confianca)}</small></span></summary><p>{f.regra}</p>{f.evidencias.map((e,i)=><button className="evidence" disabled={!e.camada} key={i} onClick={()=>setFocus({...e})}>{e.descricao}{e.valor!=null&&<> · {number(e.valor)} {e.unidade}</>}{e.camada&&<span>Localizar no mapa ↗</span>}</button>)}{!f.evidencias.length&&<p>Sem evidências adicionais.</p>}</details>)}{!d.flags_detalhe.length&&<p>Indícios não avaliados.</p>}</section><section><h2>Espécies declaradas</h2><div className="table-scroll"><table><thead><tr><th>Espécie</th><th>Aut. m³</th><th>Expl. m³</th><th>Árv.</th></tr></thead><tbody>{d.especies.map(s=><tr key={s.nome_cientifico}><td>{s.nome_popular??s.nome_cientifico}<small><i>{s.nome_cientifico}</i></small></td><td>{number(s.volume_autorizado_m3)}</td><td>{number(s.volume_explorado_m3)}</td><td>{number(s.n_arvores)}</td></tr>)}</tbody></table></div>{!d.especies.length&&<p>Espécies não informadas.</p>}</section><section><h2>Parâmetros de volume</h2>{d.parametros_volume.map(p=><div className="parameter" key={p.nome}><b>{p.nome}</b><span>{number(p.valor)} {p.unidade} · {p.distribuicao}</span><small>{p.origem}</small></div>)}</section></aside></div></main>}
+function Reliability(){const detector=useData<MetricsDetector>('/metrics/detector'),calibration=useData<MetricsCalibracao>('/metrics/calibracao');const [selected,setSelected]=useState('');if(!detector.data)return <State error={detector.error} retry={detector.retry}/>;if(!calibration.data)return <State error={calibration.error} retry={calibration.retry}/>;const d=detector.data,c=calibration.data,model=d.modelos.find(m=>m.nome===(selected||d.selecionado))??d.modelos[0];return <main className="reliability"><div className="page-heading"><div><h1>Confiabilidade e limites</h1><p>Quanto confiar no detector e na estimativa de volume — e onde investigar melhor.</p></div><Badge simulated={staticMode||d.modelos.some(m=>m.obs?.toLowerCase().includes('mock'))}/></div><div className="reliability-grid"><section><h2>Detector de distúrbio</h2><p>{d.protocolo}</p><p className="caption">Rótulos: {d.rotulos}</p><table><thead><tr><th>Modelo</th><th>IoU</th><th>F1</th><th>Precisão</th><th>Recall</th></tr></thead><tbody>{d.modelos.map(m=><tr key={m.nome} className={m.nome===model?.nome?'selected':''}><td><button className="text-button" onClick={()=>setSelected(m.nome)}>{m.nome}{m.nome===d.selecionado?' · selecionado':''}</button></td><td>{percent(m.iou)}</td><td>{percent(m.f1)}</td><td>{percent(m.precisao)}</td><td>{percent(m.recall)}</td></tr>)}</tbody></table><h3>Matriz de confusão · {model?.nome??'Não avaliado'}</h3>{model?.matriz_confusao?<><p className="caption">Linhas: classe de referência · colunas: classe prevista. Ordem das classes conforme o artefato do detector (0, 1).</p><div className="matrix">{model.matriz_confusao.map((row,i)=>row.map((n,j)=><div key={`${i}-${j}`} className={i===j?'correct':''}><small>Referência {i} / previsão {j}</small><strong>{number(n)}</strong></div>))}</div></>:<p>Matriz não avaliada.</p>}<p>{number(model?.n_pixels_teste)} pixels de teste</p><p className="warning">{model?.obs??'Observações não informadas.'}</p></section><section><h2>Calibração de volume</h2><p>{c.protocolo}</p><div className="inline-metrics"><span>R² <b>{number(c.r2)}</b></span><span>MAE <b>{number(c.mae_m3_ha)} m³/ha</b></span><span><b>{number(c.n_upas)}</b> UPAs</span><span><b>{number(c.n_celulas_treino)}</b> células</span></div><CalibrationChart data={c}/><h3>Cobertura do intervalo p10–p90</h3><div className="coverage"><strong>{percent(c.cobertura_p10_p90)}</strong><span>observada nos dados de validação<br/>Referência nominal: {percent(c.cobertura_nominal)}</span></div><p>Um intervalo nominal de 80% busca incluir o volume observado em 8 de cada 10 casos comparáveis. A cobertura empírica mostra quantas observações ficaram de fato dentro desse intervalo no teste.</p><p className="warning">{c.obs??'Observações não informadas.'}</p></section><section><h2>Como ler estes números</h2><p><b>Precisão</b> indica quantas detecções correspondem aos rótulos de distúrbio. <b>Recall</b> indica quanto do distúrbio rotulado foi recuperado. IoU mede a sobreposição espacial; F1 equilibra precisão e recall.</p><p><b>MAE</b> é o erro absoluto médio de volume por hectare. R² descreve o ajuste ao conjunto avaliado. Nenhuma dessas métricas comprova a situação de uma autorização individual.</p></section><section><h2>Limites conhecidos</h2><p>Nuvens, resolução espacial, diferenças de data e regeneração podem ocultar sinais de manejo seletivo. Ausência de sinal observável não demonstra ausência de exploração.</p><p>Modelos e intervalos dependem da representatividade das UPAs de validação. Resultados simulados demonstram o fluxo da interface e não constituem validação científica.</p><a href="#/">Voltar à triagem →</a></section></div></main>}
+export default function App(){const index=useData<Index>('/index');const firstCase=index.data?.casos.find(c=>c.analise_imagem)?.autex??index.data?.casos[0]?.autex;const [route,setRoute]=useState(location.hash||'#/'),[modal,setModal]=useState(false);useEffect(()=>{const onHash=()=>{setRoute(location.hash||'#/');window.scrollTo(0,0)};addEventListener('hashchange',onHash);return()=>removeEventListener('hashchange',onHash)},[]);const isCase=route.startsWith('#/caso/');return <><header><div className="brand"><Icon/><a href="#/">Lastro</a><span>O volume declarado tem lastro na floresta?</span></div><button className="primary" onClick={()=>setModal(true)}>+ Analisar autorização</button></header><div className="navigation"><nav aria-label="Navegação principal"><a className={route==='#/'?'active':''} href="#/">Triagem</a><a className={isCase?'active':''} href={isCase?route:firstCase?#/caso/:'#/'}>Dossiê</a><a className={route==='#/confiabilidade'?'active':''} href="#/confiabilidade">Confiabilidade</a></nav><span className="global-notice"><Badge simulated={index.data?.casos.some(c=>c.source_mode==="simulado")??false}/>{warning}</span></div>{isCase?<DossierPage key={route} autex={decodeURIComponent(route.slice(8))}/>:route==='#/confiabilidade'?<Reliability/>:<Triage/>}<footer>Lastro · Triagem de exploração madeireira <span>Indícios para priorizar fiscalização. A conclusão exige análise técnica.</span></footer>{modal&&<AnalyzeModal close={()=>setModal(false)}/>}</>}
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
-
-export default App

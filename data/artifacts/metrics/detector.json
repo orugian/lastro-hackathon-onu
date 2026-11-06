@@ -1,0 +1,46 @@
+{
+  "protocolo": "GroupKFold espacial externo k=5, blocos fixos 5 km EPSG:31980; 36 blocos, 65500 pixels. Limiar LightGBM escolhido por F1 em holdout interno por bloco (25%), sem usar teste externo. Reajuste em todo treino externo. Baseline Otsu nao supervisionado por tile completo e abertura 3x3 antes de amostrar. Metricas agregadas out-of-fold. Modelo final ajustado em todos os blocos. Tempo treino e avaliacao 13.49 s.",
+  "rotulos": "INPE PRODES anual e DETER: corte raso, CS_DESORDENADO, CS_GEOMETRICO, DEGRADACAO; 2022-2024; AMACRO",
+  "modelos": [
+    {
+      "nome": "baseline-otsu",
+      "iou": 0.2833115556002278,
+      "f1": 0.44153199488290734,
+      "precisao": 0.9605816199023061,
+      "recall": 0.28664406779661017,
+      "matriz_confusao": [
+        [
+          35653,
+          347
+        ],
+        [
+          21044,
+          8456
+        ]
+      ],
+      "n_pixels_teste": 65500,
+      "obs": "Rotulos fracos: DETER (~3 ha) e PRODES (6,25 ha) nao captam todas as pequenas clareiras. Datas anuais podem incluir eventos posteriores a mediana jun-set; negativos usam NDVI pre >0,75 e exclusao de todos os alertas DETER e PRODES 2008+. Pixels balanceados nao representam prevalencia operacional. Blocos adjacentes nao tem buffer de separacao. Probabilidade nao calibrada; resultado e indicio para priorizar fiscalizacao, nunca prova. Por tipo (mesmos negativos estaveis em cada estrato): {\"corte_raso\": {\"iou\": 0.479108635097493, \"f1\": 0.647834274952919, \"precisao\": 0.942387514527644, \"recall\": 0.4935652173913043, \"matriz_confusao\": [[35653, 347], [5824, 5676]], \"n_pixels_teste\": 47500}, \"seletivo_degradacao\": {\"iou\": 0.15152340982176923, \"f1\": 0.263170350736025, \"precisao\": 0.8890310201471059, \"recall\": 0.15444444444444444, \"matriz_confusao\": [[35653, 347], [15220, 2780]], \"n_pixels_teste\": 54000}}; exclusao demo: pretriagem.csv ausente na selecao; sobreposicao com demo nao verificada"
+    },
+    {
+      "nome": "lightgbm",
+      "iou": 0.5610451566912511,
+      "f1": 0.7188070816355205,
+      "precisao": 0.7458448753462604,
+      "recall": 0.6936610169491525,
+      "matriz_confusao": [
+        [
+          29027,
+          6973
+        ],
+        [
+          9037,
+          20463
+        ]
+      ],
+      "n_pixels_teste": 65500,
+      "obs": "Rotulos fracos: DETER (~3 ha) e PRODES (6,25 ha) nao captam todas as pequenas clareiras. Datas anuais podem incluir eventos posteriores a mediana jun-set; negativos usam NDVI pre >0,75 e exclusao de todos os alertas DETER e PRODES 2008+. Pixels balanceados nao representam prevalencia operacional. Blocos adjacentes nao tem buffer de separacao. Probabilidade nao calibrada; resultado e indicio para priorizar fiscalizacao, nunca prova. Por tipo (mesmos negativos estaveis em cada estrato): {\"corte_raso\": {\"iou\": 0.5571915768960104, \"f1\": 0.7156365153305986, \"precisao\": 0.5961427082126723, \"recall\": 0.8950434782608696, \"matriz_confusao\": [[29027, 6973], [1207, 10293]], \"n_pixels_teste\": 47500}, \"seletivo_degradacao\": {\"iou\": 0.4072398190045249, \"f1\": 0.5787781350482315, \"precisao\": 0.5932450562911976, \"recall\": 0.565, \"matriz_confusao\": [[29027, 6973], [7830, 10170]], \"n_pixels_teste\": 54000}}; exclusao demo: pretriagem.csv ausente na selecao; sobreposicao com demo nao verificada"
+    }
+  ],
+  "selecionado": "lightgbm",
+  "gerado_em": "2026-11-06T03:15:32.818118+00:00"
+}
