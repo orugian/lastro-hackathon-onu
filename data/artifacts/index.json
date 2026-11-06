@@ -2204,6 +2204,86 @@
    "processado_em": "2026-11-06T07:57:25+00:00"
   },
   {
+   "autex": "20132202586762",
+   "tipo": "POA",
+   "uf": "AM",
+   "municipio": "CANUTAMA",
+   "centroide": [
+    -63.926664,
+    -8.130515
+   ],
+   "bbox": [
+    -63.94611,
+    -8.152003,
+    -63.905091,
+    -8.110584
+   ],
+   "area_autorizada_ha": 1086.33,
+   "validade": {
+    "inicio": "2025-11-19",
+    "fim": "2027-11-13"
+   },
+   "situacao": "Autorização Emitida",
+   "volume_autorizado_m3": 18898.68,
+   "volume_declarado_explorado_m3": 9482.24,
+   "volume_estimado_m3": {
+    "p10": 5060.3,
+    "p50": 11455.6,
+    "p90": 26272.4
+   },
+   "area_disturbio_ha": 49.91,
+   "area_disturbio_fora_ha": 35.2,
+   "n_arvores_declaradas": 2475,
+   "flags": [
+    {
+     "codigo": "A",
+     "titulo": "Volume declarado sem lastro observável",
+     "status": "sem_indicio",
+     "severidade": "info",
+     "confianca": 0.67
+    },
+    {
+     "codigo": "B",
+     "titulo": "Distúrbio sem declaração (dentro ou fora da UPA)",
+     "status": "indicio",
+     "severidade": "alta",
+     "confianca": 0.76
+    },
+    {
+     "codigo": "C",
+     "titulo": "Árvores declaradas fora do polígono",
+     "status": "sem_indicio",
+     "severidade": "info",
+     "confianca": 0.95
+    },
+    {
+     "codigo": "D",
+     "titulo": "Volume explorado acima do autorizado",
+     "status": "sem_indicio",
+     "severidade": "info",
+     "confianca": 0.9
+    },
+    {
+     "codigo": "E",
+     "titulo": "Exploração fora da validade",
+     "status": "sem_indicio",
+     "severidade": "info",
+     "confianca": 0.95
+    },
+    {
+     "codigo": "F6",
+     "titulo": "Mudança sobre UC/TI/embargo",
+     "status": "nao_avaliado",
+     "severidade": "info",
+     "confianca": 0.0
+    }
+   ],
+   "score": 0.5323,
+   "source_mode": "real",
+   "analise_imagem": true,
+   "processado_em": "2026-11-06T12:29:00+00:00"
+  },
+  {
    "autex": "20112202421771",
    "tipo": "POA",
    "uf": "RO",
@@ -66213,65 +66293,6 @@
      "status": "nao_avaliado",
      "severidade": "info",
      "confianca": 0.0
-    }
-   ],
-   "score": 0.0,
-   "source_mode": "real",
-   "analise_imagem": false,
-   "processado_em": "2026-11-06T08:15:20+00:00"
-  },
-  {
-   "autex": "20132202586762",
-   "tipo": "POA",
-   "uf": "AM",
-   "municipio": "CANUTAMA",
-   "centroide": [
-    -63.926664,
-    -8.130515
-   ],
-   "bbox": [
-    -63.94611,
-    -8.152003,
-    -63.905091,
-    -8.110584
-   ],
-   "area_autorizada_ha": 1086.33,
-   "validade": {
-    "inicio": "2025-11-19",
-    "fim": "2027-11-13"
-   },
-   "situacao": "Autorização Emitida",
-   "volume_autorizado_m3": 18898.68,
-   "volume_declarado_explorado_m3": 9482.24,
-   "volume_estimado_m3": {
-    "p10": null,
-    "p50": null,
-    "p90": null
-   },
-   "area_disturbio_ha": null,
-   "area_disturbio_fora_ha": null,
-   "n_arvores_declaradas": 2475,
-   "flags": [
-    {
-     "codigo": "C",
-     "titulo": "Árvores declaradas fora do polígono",
-     "status": "sem_indicio",
-     "severidade": "info",
-     "confianca": 0.95
-    },
-    {
-     "codigo": "D",
-     "titulo": "Volume explorado acima do autorizado",
-     "status": "sem_indicio",
-     "severidade": "info",
-     "confianca": 0.9
-    },
-    {
-     "codigo": "E",
-     "titulo": "Exploração fora da validade",
-     "status": "sem_indicio",
-     "severidade": "info",
-     "confianca": 0.95
     }
    ],
    "score": 0.0,

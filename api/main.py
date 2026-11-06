@@ -28,7 +28,7 @@ from contracts.models import Dossier, Index, MetricsCalibracao, MetricsDetector,
 from api.dossier_html import render as render_dossier_html
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-LIVE_TIMEOUT = 90.0
+LIVE_TIMEOUT = float(os.environ.get("LASTRO_LIVE_TIMEOUT", "240"))
 UNAVAILABLE = "Análise ao vivo indisponível; exibindo dados em cache"
 NOTICE = "Resultado experimental de triagem. Não constitui prova nem auto de infração."
 NOT_IN_POLO = "Autorização não encontrada no polo processado"
@@ -140,8 +140,8 @@ def create_app(artifacts_root=None, dist_root=None):
     @app.get("/api/health")
     def health():
         index = artifacts.read("index.json", model=Index)
-        mock = artifacts.root.name == "artifacts-mock" or any(
-            case.source_mode == "simulado" for case in index.casos
+        mock = artifacts.root.name == "artifacts-mock" or (
+            bool(index.casos) and all(case.source_mode == "simulado" for case in index.casos)
         )
         return dict(status="ok", versao=SCHEMA_VERSION, artifacts_root=str(artifacts.root),
                     modo="mock" if mock else "real", gerado_em=index.gerado_em)
@@ -247,8 +247,10 @@ def create_app(artifacts_root=None, dist_root=None):
             if exc.status_code != 404:
                 raise
         else:
-            job.update(status="done", etapa="Dados em cache", progresso=1,
-                       resultado=jsonable_encoder(cached), cached=True)
+            # Só é cache "completo" se a imagem já foi analisada; dossiê documental dispara análise ao vivo.
+            if getattr(cached, "analise_imagem", True) or artifacts.root.name == "artifacts-mock":
+                job.update(status="done", etapa="Dados em cache", progresso=1,
+                           resultado=jsonable_encoder(cached), cached=True)
         jobs[job_id] = job
         if job["status"] == "queued":
             task = asyncio.create_task(run_job(job_id, autex))

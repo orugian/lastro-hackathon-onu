@@ -68,6 +68,7 @@ function CaseRow({ c, rank, hovered, onHover }: { c: CaseSummary; rank: number; 
           <div className="case-id">
             <code>{c.autex}</code>
             <span className="tipo">{c.tipo}</span>
+            <SimBadge show={c.source_mode === "simulado"} />
             {c.analise_imagem ? (
               <span className="imgflag" title="Imagem de satélite analisada">
                 <Icon name="image" size={14} /> imagem
@@ -143,7 +144,8 @@ export function Triage() {
   };
 
   if (!data) return error ? <ErrorState message={error} retry={retry} /> : <Loading label="Carregando autorizações do polo…" />;
-  const simulated = data.casos.some((c) => c.source_mode === "simulado");
+  // Selo global só quando TODO o acervo é simulado (mock); caso simulado isolado leva selo na própria linha.
+  const simulated = data.casos.length > 0 && data.casos.every((c) => c.source_mode === "simulado");
 
   return (
     <main className="triage">
