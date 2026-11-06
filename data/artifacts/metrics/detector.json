@@ -1,5 +1,5 @@
 {
-  "protocolo": "GroupKFold espacial externo k=5, blocos fixos 5 km EPSG:31980; 36 blocos, 65500 pixels. Limiar LightGBM escolhido por F1 em holdout interno por bloco (25%), sem usar teste externo. Reajuste em todo treino externo. Baseline Otsu nao supervisionado por tile completo e abertura 3x3 antes de amostrar. Metricas agregadas out-of-fold. Modelo final ajustado em todos os blocos. Tempo treino e avaliacao 13.49 s.",
+  "protocolo": "GroupKFold espacial externo k=5, blocos fixos 5 km EPSG:31980; 36 blocos, 65500 pixels. Limiar LightGBM escolhido por F1 em holdout interno por bloco (25%), sem usar teste externo. Reajuste em todo treino externo. Baseline Otsu nao supervisionado por tile completo e abertura 3x3 antes de amostrar. Metricas agregadas out-of-fold. Modelo final ajustado em todos os blocos. Tempo treino e avaliacao 13.49 s. | Entradas [Colab]: segundo protocolo independente (blocos de 25 km), usado para comparar deep learning com LightGBM e baseline nos mesmos pixels.",
   "rotulos": "INPE PRODES anual e DETER: corte raso, CS_DESORDENADO, CS_GEOMETRICO, DEGRADACAO; 2022-2024; AMACRO",
   "modelos": [
     {
@@ -39,6 +39,63 @@
       ],
       "n_pixels_teste": 65500,
       "obs": "Rotulos fracos: DETER (~3 ha) e PRODES (6,25 ha) nao captam todas as pequenas clareiras. Datas anuais podem incluir eventos posteriores a mediana jun-set; negativos usam NDVI pre >0,75 e exclusao de todos os alertas DETER e PRODES 2008+. Pixels balanceados nao representam prevalencia operacional. Blocos adjacentes nao tem buffer de separacao. Probabilidade nao calibrada; resultado e indicio para priorizar fiscalizacao, nunca prova. Por tipo (mesmos negativos estaveis em cada estrato): {\"corte_raso\": {\"iou\": 0.5571915768960104, \"f1\": 0.7156365153305986, \"precisao\": 0.5961427082126723, \"recall\": 0.8950434782608696, \"matriz_confusao\": [[29027, 6973], [1207, 10293]], \"n_pixels_teste\": 47500}, \"seletivo_degradacao\": {\"iou\": 0.4072398190045249, \"f1\": 0.5787781350482315, \"precisao\": 0.5932450562911976, \"recall\": 0.565, \"matriz_confusao\": [[29027, 6973], [7830, 10170]], \"n_pixels_teste\": 54000}}; exclusao demo: pretriagem.csv ausente na selecao; sobreposicao com demo nao verificada"
+    },
+    {
+      "iou": 0.7419805207579473,
+      "f1": 0.8518815358912356,
+      "precisao": 0.8209319658345151,
+      "recall": 0.8852561622322871,
+      "matriz_confusao": [
+        [
+          1139241,
+          135747
+        ],
+        [
+          80664,
+          622328
+        ]
+      ],
+      "n_pixels_teste": 1977980,
+      "nome": "[Colab] U-Net siamesa (ResNet34)",
+      "obs": "Teste espacial do Colab: blocos de 25 km (70/15/15). 1.977.980 px. 400 chips 224x224. GPU Tesla T4. Comparável apenas às outras entradas [Colab] (mesmos pixels). não às métricas locais de 5 folds/5 km. Deep learning, limiar 0,5, 9 épocas com early stopping. Prithvi-EO-2.0 tentado e substituído pelo fallback (prithvi_eo_v2_100_tl: ImportError: cannot import name 'utils' from 'torchgeo.trainers' (/usr/local/lib/python3.1). Pesos não exportados: experimento de pesquisa, ainda não usado no pipeline operacional."
+    },
+    {
+      "iou": 0.7045461820649564,
+      "f1": 0.8266671674585439,
+      "precisao": 0.8758533856069325,
+      "recall": 0.782711609804948,
+      "matriz_confusao": [
+        [
+          1196995,
+          77993
+        ],
+        [
+          152752,
+          550240
+        ]
+      ],
+      "n_pixels_teste": 1977980,
+      "nome": "[Colab] LightGBM",
+      "obs": "Teste espacial do Colab: blocos de 25 km (70/15/15). 1.977.980 px. 400 chips 224x224. GPU Tesla T4. Comparável apenas às outras entradas [Colab] (mesmos pixels). não às métricas locais de 5 folds/5 km. Mesmo algoritmo do detector local, retreinado nos chips do Colab."
+    },
+    {
+      "iou": 0.4323121235925635,
+      "f1": 0.6036563071297989,
+      "precisao": 0.9431776277211203,
+      "recall": 0.4438727609987027,
+      "matriz_confusao": [
+        [
+          1256189,
+          18799
+        ],
+        [
+          390953,
+          312039
+        ]
+      ],
+      "n_pixels_teste": 1977980,
+      "nome": "[Colab] ΔNDVI + Otsu",
+      "obs": "Teste espacial do Colab: blocos de 25 km (70/15/15). 1.977.980 px. 400 chips 224x224. GPU Tesla T4. Comparável apenas às outras entradas [Colab] (mesmos pixels). não às métricas locais de 5 folds/5 km. Baseline sem treino nos mesmos chips."
     }
   ],
   "selecionado": "lightgbm",

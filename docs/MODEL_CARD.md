@@ -115,7 +115,7 @@ Execução de 2026-11-06 (`uv run python -m pipeline.volume.calibrar`). Fontes: 
 **Como ler.**
 - **O intervalo está calibrado.** Em UPAs que o modelo não viu, o volume declarado caiu dentro de p10–p90 em 79% das células antes do conformal e em 83,5% depois, contra 80% nominais. No total da UPA, a cobertura foi de 87,5% a 88,9%, um pouco conservadora. Isso favorece o titular: menos indícios A.
 - **O ponto central não é informativo por célula.** O R² da célula é cerca de zero. Numa célula de 1 ha, a imagem quase não prevê *quanto* foi declarado, por causa do erro de GPS, da clareira sub-pixel e da variação de volume por árvore. No total da UPA, o R² sobe para 0,29 a 0,53, com erro relativo mediano de cerca de 34%.
-- **Consequência para as regras.** O Lastro nunca usa a mediana (p50) para abrir indício. A assinatura A exige que o declarado da UPA supere o **p90** do Monte Carlo **e** que a divergência esteja concentrada em células. Nos 3 casos com imagem desta execução, A ficou **inconclusiva**: há blocos de células acima do p90, mas o total da UPA cabe no intervalo.
+- **Consequência para as regras.** O Lastro nunca usa a mediana (p50) para abrir indício. A assinatura A exige que o declarado da UPA supere o **p90** do Monte Carlo **e** que a divergência esteja concentrada em células. Resultado de A nos casos com imagem: [a preencher após regeneração do index].
 
 ### Limitações da calibração
 - **Possível contaminação.** As UPAs "limpas" não têm indício documental nem DETER, mas podem conter divergência não detectada. Se o declarado estiver inflado nelas, a relação declarado/distúrbio aprendida fica inflada, e o Lastro **subestima** o indício A. O viés é conservador para o titular, mas existe.
@@ -154,7 +154,7 @@ Execução de 2026-11-06 (`uv run python -m pipeline.volume.calibrar`). Fontes: 
 | Autorizações vizinhas | Distúrbio de terceiro atribuído ao titular | AOI menos polígonos de outras autorizações; B exclui área coberta por outra autorização |
 | Amostra do detector enviesada para alertas | Métricas não representam o polo inteiro | Declarado no protocolo |
 | UC/TI/embargo não integrados | F6 não avaliado | `nao_avaliado` explícito |
-| Sazonalidade do par pré/pós | A janela pós segue a data da última exploração e pode cair fora da estação seca. Com o pré em jun–set, pasto e áreas já abertas podem aparecer como "mudança" no buffer | Nesta execução, B somou de 406 a 2.566 ha fora da UPA nos 3 casos com imagem, com alertas DETER coincidentes. **Em revisão**: filtrar por floresta no pré ou fixar o pós na estação seca. Até lá, B deve ser lida junto com as camadas DETER/PRODES do dossiê |
+| Sazonalidade do par pré/pós | A janela pós segue a data da última exploração e pode cair fora da estação seca. Com o pré em jun–set, pasto e áreas já abertas podem aparecer como "mudança" no buffer | Uma execução preliminar produziu áreas B implausíveis, de centenas a milhares de ha fora da UPA. Correção encaminhada ao pipeline: máscara de floresta no pré, janelas sazonais comparáveis, área mínima e sanity check. Efeito após a correção: [a preencher] |
 
 ## 5. Considerações éticas e jurídicas
 

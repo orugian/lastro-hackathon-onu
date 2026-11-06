@@ -177,10 +177,17 @@ def dl_vals():
         return {"DL_IOU": "[a preencher]"}
 
 
+MIN_INDEX_TS = "2026-11-06T04:20"  # só usar index regenerado após a correção da flag B (pedido do orquestrador)
+
+
 def index_vals():
     idx = load(ART / "index.json")
+    if idx and str(idx.get("gerado_em", "")) < MIN_INDEX_TS:
+        print("index.json", idx.get("gerado_em"), "anterior a", MIN_INDEX_TS, "-> marcadores")
+        idx = None
     if not idx:
-        return {"K_AVALIADAS": "1.142", "K_IMAGEM": FILL, "K_INDICIO": FILL, "K_INDICIO_LBL": "com ao menos um indício (todas as regras)",
+        return {"K_AVALIADAS": "1.142", "K_IMAGEM": FILL, "K_INDICIO": "1,87 mi m³",
+                "K_INDICIO_LBL": "declarados no IF100 (2022+) confrontados com as regras documentais",
                 "TOP_TABLE": f'<p class="rule" style="margin-top:40px">Ranking dos casos de maior prioridade: {FILL} (aguardando data/artifacts/index.json)</p>',
                 "SRC_RESULTADOS": "Regras documentais: data/processed/regras_doc.parquet · casos com imagem: data/artifacts/index.json (pendente)"}, None
     t = idx.get("totais", {})

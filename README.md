@@ -43,7 +43,7 @@ Os dados brutos ficam em `data/raw/` (`scripts/download_bg.ps1`). Todas as etapa
 | Razão explorado/autorizado (IF100, agregada por autorização) | mediana **0,98**, p95 **1,05** | IF100 |
 | Detector LightGBM vs baseline Otsu (fora da amostra, 65.500 px) | IoU **0,561** vs 0,283 · F1 **0,719** vs 0,442 | `data/artifacts/metrics/detector.json` |
 | Calibração imagem → volume (72 UPAs, 17.193 células, GroupKFold por UPA) | cobertura empírica p10–p90 de **83,5%** por célula (79,0% antes do conformal) e **88,9%** por UPA, contra 80% nominais | `data/artifacts/metrics/calibracao.json` |
-| Triagem exportada | 1.142 autorizações no índice, **3** com análise de imagem, **46** com ao menos um indício (B 3 · C 11 · D 10 · E 29; A: 3 inconclusivos) | `data/artifacts/index.json` (06/11/2026) |
+| Triagem exportada (casos com imagem, indícios A/B) | [a preencher] (aguardando regeneração do index após correção da flag B) | `data/artifacts/index.json` |
 
 ## Documentação
 
