@@ -1,0 +1,326 @@
+{
+ "autex": "10112202607020",
+ "tipo": "POA",
+ "uf": "RO",
+ "municipio": "CANDEIAS DO JAMARI",
+ "centroide": [
+  -62.826813,
+  -8.594304
+ ],
+ "bbox": [
+  -62.838014,
+  -8.616941,
+  -62.812099,
+  -8.5717
+ ],
+ "area_autorizada_ha": 1225.63,
+ "validade": {
+  "inicio": "2026-05-12",
+  "fim": "2027-05-12"
+ },
+ "situacao": "Autorização Emitida",
+ "volume_autorizado_m3": 21620.56,
+ "volume_declarado_explorado_m3": 17044.16,
+ "volume_estimado_m3": {
+  "p10": null,
+  "p50": null,
+  "p90": null
+ },
+ "area_disturbio_ha": null,
+ "area_disturbio_fora_ha": null,
+ "n_arvores_declaradas": 2324,
+ "flags": [
+  {
+   "codigo": "C",
+   "titulo": "Árvores declaradas fora do polígono",
+   "status": "sem_indicio",
+   "severidade": "baixa",
+   "confianca": 0.95
+  },
+  {
+   "codigo": "D",
+   "titulo": "Volume explorado acima do autorizado",
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.9
+  },
+  {
+   "codigo": "E",
+   "titulo": "Exploração fora da validade",
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.95
+  }
+ ],
+ "score": 0.0,
+ "source_mode": "real",
+ "analise_imagem": false,
+ "processado_em": "2026-11-06T03:56:11+00:00",
+ "schema_version": "1.0",
+ "flags_detalhe": [
+  {
+   "codigo": "C",
+   "titulo": "Árvores declaradas fora do polígono",
+   "status": "sem_indicio",
+   "severidade": "baixa",
+   "confianca": 0.95,
+   "regra": "Coordenada IF100 a mais de 20 m e até 5 km fora do polígono autorizado (acima de 5 km: coordenada incoerente, tratada como limitação cadastral)",
+   "evidencias": [],
+   "volume_m3": null,
+   "area_ha": null
+  },
+  {
+   "codigo": "D",
+   "titulo": "Volume explorado acima do autorizado",
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.9,
+   "regra": "Σ explorado (IF100) > Σ autorizado (POA), ou razão agregada IF100 explorado/autorizado > 1.10, ou intensidade > 30 m³/ha. Diferenças por árvore (> 10%) são reportadas como contexto (cubagem real × inventário).",
+   "evidencias": [
+    {
+     "tipo": "metrica",
+     "descricao": "Volume explorado declarado 17.044,2 m³ para 21.620,6 m³ autorizados no POA",
+     "valor": 17044.2,
+     "unidade": "m³",
+     "camada": null,
+     "filtro": null,
+     "fonte": "if100"
+    },
+    {
+     "tipo": "metrica",
+     "descricao": "Razão agregada explorado/autorizado das mesmas árvores (IF100): 1,021",
+     "valor": 1.021,
+     "unidade": "razão",
+     "camada": null,
+     "filtro": null,
+     "fonte": "if100"
+    },
+    {
+     "tipo": "metrica",
+     "descricao": "Intensidade declarada 13,9 m³/ha (teto 30 m³/ha)",
+     "valor": 13.91,
+     "unidade": "m³/ha",
+     "camada": null,
+     "filtro": null,
+     "fonte": "if100"
+    },
+    {
+     "tipo": "texto",
+     "descricao": "607 árvore(s) com volume explorado > 110% do autorizado na própria árvore (contexto)",
+     "valor": 607.0,
+     "unidade": "árvores",
+     "camada": null,
+     "filtro": null,
+     "fonte": "if100"
+    }
+   ],
+   "volume_m3": null,
+   "area_ha": null
+  },
+  {
+   "codigo": "E",
+   "titulo": "Exploração fora da validade",
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.95,
+   "regra": "Datas de exploração IF100 fora do intervalo [início, fim] da validade da autorização (limites inclusivos)",
+   "evidencias": [
+    {
+     "tipo": "metrica",
+     "descricao": "Exploração declarada entre 2026-06-18 e 2026-10-23",
+     "valor": null,
+     "unidade": null,
+     "camada": null,
+     "filtro": null,
+     "fonte": "if100"
+    }
+   ],
+   "volume_m3": null,
+   "area_ha": null
+  }
+ ],
+ "imagens": [],
+ "camadas": [
+  "upa",
+  "arvores"
+ ],
+ "especies": [
+  {
+   "nome_cientifico": "Couratari guianensis",
+   "nome_popular": "Tauari",
+   "volume_autorizado_m3": 4851.98,
+   "volume_explorado_m3": 4415.88,
+   "n_arvores": 443
+  },
+  {
+   "nome_cientifico": "Astronium lecointei",
+   "nome_popular": "Maracatiara",
+   "volume_autorizado_m3": 2055.18,
+   "volume_explorado_m3": 1857.88,
+   "n_arvores": 234
+  },
+  {
+   "nome_cientifico": "Allantoma lineata",
+   "nome_popular": "Jequitibá-rosa",
+   "volume_autorizado_m3": 1790.67,
+   "volume_explorado_m3": 1502.66,
+   "n_arvores": 205
+  },
+  {
+   "nome_cientifico": "Hymenolobium pulcherrimum",
+   "nome_popular": "Angelim-pedra",
+   "volume_autorizado_m3": 1502.99,
+   "volume_explorado_m3": 1474.97,
+   "n_arvores": 176
+  },
+  {
+   "nome_cientifico": "Hymenaea parvifolia",
+   "nome_popular": "Jatobá",
+   "volume_autorizado_m3": 1402.0,
+   "volume_explorado_m3": 1190.55,
+   "n_arvores": 166
+  },
+  {
+   "nome_cientifico": "Clarisia racemosa",
+   "nome_popular": "Guariúba",
+   "volume_autorizado_m3": 994.22,
+   "volume_explorado_m3": 838.17,
+   "n_arvores": 200
+  },
+  {
+   "nome_cientifico": "Peltogyne heterophylla",
+   "nome_popular": "Roxinho",
+   "volume_autorizado_m3": 1034.42,
+   "volume_explorado_m3": 836.28,
+   "n_arvores": 189
+  },
+  {
+   "nome_cientifico": "Dipteryx odorata",
+   "nome_popular": "Cumaru-ferro",
+   "volume_autorizado_m3": 935.27,
+   "volume_explorado_m3": 532.05,
+   "n_arvores": 97
+  },
+  {
+   "nome_cientifico": "Apuleia leiocarpa",
+   "nome_popular": "Garapeira",
+   "volume_autorizado_m3": 599.06,
+   "volume_explorado_m3": 505.5,
+   "n_arvores": 82
+  },
+  {
+   "nome_cientifico": "Cariniana micrantha",
+   "nome_popular": "Jequitibá-de-carvão",
+   "volume_autorizado_m3": 605.72,
+   "volume_explorado_m3": 487.08,
+   "n_arvores": 16
+  }
+ ],
+ "parametros_volume": [
+  {
+   "nome": "Peso da flag A",
+   "distribuicao": "fixo",
+   "valor": 1.0,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag B",
+   "distribuicao": "fixo",
+   "valor": 1.0,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag D",
+   "distribuicao": "fixo",
+   "valor": 0.8,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag F2",
+   "distribuicao": "fixo",
+   "valor": 0.9,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag C",
+   "distribuicao": "fixo",
+   "valor": 0.6,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag E",
+   "distribuicao": "fixo",
+   "valor": 0.6,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag F6",
+   "distribuicao": "fixo",
+   "valor": 1.0,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  }
+ ],
+ "modelo": {
+  "score": "1 − exp(−Σ peso × severidade × confiança)"
+ },
+ "proveniencia": [
+  {
+   "id": "pamgia",
+   "fonte": "IBAMA PAMGIA - Polígonos Sinaflor (autorizações)",
+   "url": "https://pamgia.ibama.gov.br/server/rest/services/SINAFLORGEO/sinaflor_proj_externo_merge_a/FeatureServer/6",
+   "consultado_em": "2026-11-06T03:17:15+00:00",
+   "versao": null,
+   "licenca": "Dados abertos"
+  },
+  {
+   "id": "sinaflor",
+   "fonte": "IBAMA - Sinaflor: POA, ASV e UAS (volumes autorizados por espécie)",
+   "url": "https://dadosabertos.ibama.gov.br/organization/instituto-brasileiro-do-meio-ambiente-e-dos-recursos-naturais-renovaveis",
+   "consultado_em": "2026-11-06T01:16:23+00:00",
+   "versao": null,
+   "licenca": "Dados abertos"
+  },
+  {
+   "id": "if100",
+   "fonte": "IBAMA - Volumes Explorados IF100 (Sinaflor)",
+   "url": "https://dadosabertos.ibama.gov.br/dataset/volumes-explorados-if-100",
+   "consultado_em": "2026-11-06T01:50:26+00:00",
+   "versao": null,
+   "licenca": "Dados abertos"
+  }
+ ],
+ "limitacoes": [
+  "Análise somente documental (IF100 × autorização); imagem de satélite não processada para esta autorização."
+ ],
+ "linha_do_tempo": [
+  {
+   "data": "2026-05-12",
+   "evento": "Início da validade",
+   "fonte": "pamgia"
+  },
+  {
+   "data": "2026-06-18",
+   "evento": "Primeira árvore declarada como explorada",
+   "fonte": "if100"
+  },
+  {
+   "data": "2026-10-23",
+   "evento": "Última árvore declarada como explorada",
+   "fonte": "if100"
+  },
+  {
+   "data": "2027-05-12",
+   "evento": "Fim da validade",
+   "fonte": "pamgia"
+  }
+ ],
+ "legal_conclusion": false,
+ "aviso": "Resultado experimental de triagem. Não constitui prova nem auto de infração."
+}

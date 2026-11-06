@@ -1,0 +1,189 @@
+{
+ "autex": "20139202104017",
+ "tipo": "ASV",
+ "uf": "AM",
+ "municipio": "CANUTAMA",
+ "centroide": [
+  -63.907694,
+  -7.487674
+ ],
+ "bbox": [
+  -63.932834,
+  -7.500862,
+  -63.888434,
+  -7.477553
+ ],
+ "area_autorizada_ha": 900.55,
+ "validade": {
+  "inicio": "2021-12-15",
+  "fim": "2022-11-29"
+ },
+ "situacao": "Autorização Emitida",
+ "volume_autorizado_m3": null,
+ "volume_declarado_explorado_m3": null,
+ "volume_estimado_m3": {
+  "p10": null,
+  "p50": null,
+  "p90": null
+ },
+ "area_disturbio_ha": null,
+ "area_disturbio_fora_ha": null,
+ "n_arvores_declaradas": null,
+ "flags": [
+  {
+   "codigo": "C",
+   "titulo": "Árvores declaradas fora do polígono",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0
+  },
+  {
+   "codigo": "D",
+   "titulo": "Volume estimado acima do autorizado",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0
+  },
+  {
+   "codigo": "E",
+   "titulo": "Desmatamento fora da validade",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0
+  }
+ ],
+ "score": 0.0,
+ "source_mode": "real",
+ "analise_imagem": false,
+ "processado_em": "2026-11-06T03:57:16+00:00",
+ "schema_version": "1.0",
+ "flags_detalhe": [
+  {
+   "codigo": "C",
+   "titulo": "Árvores declaradas fora do polígono",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0,
+   "regra": "Árvores IF100 fora do polígono (não se aplica a corte raso sem IF100)",
+   "evidencias": [],
+   "volume_m3": null,
+   "area_ha": null
+  },
+  {
+   "codigo": "D",
+   "titulo": "Volume estimado acima do autorizado",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0,
+   "regra": "Volume estimado por imagem > volume autorizado (requer análise de imagem)",
+   "evidencias": [],
+   "volume_m3": null,
+   "area_ha": null
+  },
+  {
+   "codigo": "E",
+   "titulo": "Desmatamento fora da validade",
+   "status": "nao_avaliado",
+   "severidade": "info",
+   "confianca": 0.0,
+   "regra": "Mudança fora da validade (requer análise de imagem)",
+   "evidencias": [],
+   "volume_m3": null,
+   "area_ha": null
+  }
+ ],
+ "imagens": [],
+ "camadas": [
+  "upa"
+ ],
+ "especies": [],
+ "parametros_volume": [
+  {
+   "nome": "Peso da flag A",
+   "distribuicao": "fixo",
+   "valor": 1.0,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag B",
+   "distribuicao": "fixo",
+   "valor": 1.0,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag D",
+   "distribuicao": "fixo",
+   "valor": 0.8,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag F2",
+   "distribuicao": "fixo",
+   "valor": 0.9,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag C",
+   "distribuicao": "fixo",
+   "valor": 0.6,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag E",
+   "distribuicao": "fixo",
+   "valor": 0.6,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  },
+  {
+   "nome": "Peso da flag F6",
+   "distribuicao": "fixo",
+   "valor": 1.0,
+   "unidade": null,
+   "origem": "pipeline/rules/score.py · score = 1 − exp(−Σ peso × severidade × confiança); severidade alta=1, média=0,6, baixa=0,3"
+  }
+ ],
+ "modelo": {
+  "score": "1 − exp(−Σ peso × severidade × confiança)"
+ },
+ "proveniencia": [
+  {
+   "id": "pamgia",
+   "fonte": "IBAMA PAMGIA - Polígonos Sinaflor (autorizações)",
+   "url": "https://pamgia.ibama.gov.br/server/rest/services/SINAFLORGEO/sinaflor_proj_externo_merge_a/FeatureServer/6",
+   "consultado_em": "2026-11-06T03:17:15+00:00",
+   "versao": null,
+   "licenca": "Dados abertos"
+  },
+  {
+   "id": "sinaflor",
+   "fonte": "IBAMA - Sinaflor: POA, ASV e UAS (volumes autorizados por espécie)",
+   "url": "https://dadosabertos.ibama.gov.br/organization/instituto-brasileiro-do-meio-ambiente-e-dos-recursos-naturais-renovaveis",
+   "consultado_em": "2026-11-06T01:16:23+00:00",
+   "versao": null,
+   "licenca": "Dados abertos"
+  }
+ ],
+ "limitacoes": [
+  "Análise somente documental (IF100 × autorização); imagem de satélite não processada para esta autorização."
+ ],
+ "linha_do_tempo": [
+  {
+   "data": "2021-12-15",
+   "evento": "Início da validade",
+   "fonte": "pamgia"
+  },
+  {
+   "data": "2022-11-29",
+   "evento": "Fim da validade",
+   "fonte": "pamgia"
+  }
+ ],
+ "legal_conclusion": false,
+ "aviso": "Resultado experimental de triagem. Não constitui prova nem auto de infração."
+}

@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lastro · pitch</title>
+<!-- Gerado por pitch/build_deck.py a partir de pitch/deck.template.html. Não edite deck.html à mão. -->
+<style>
+:root{--forest:#173a2c;--forest2:#0f2a1f;--paper:#f3f4e8;--lime:#c5f67c;--ink:#14261d;--muted:#5d6e63;--line:#cfd5c3;--rust:#c8553d;--s:1}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#09170f;overflow:hidden;font-family:"Segoe UI",Inter,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+#deck{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform:translate(-50%,-50%) scale(var(--s));transform-origin:center}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;padding:80px 120px 130px;background:var(--paper);color:var(--ink);font-size:32px;line-height:1.38;overflow:hidden}
+.slide.on{display:flex}
+.slide.dark{background:var(--forest);color:var(--paper)}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;font-weight:400;margin:0;letter-spacing:-.01em}
+h2{font-size:66px;line-height:1.08;max-width:1560px}
+h3{font-size:38px;line-height:1.15}
+p{margin:0}
+.kicker{font-size:24px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:22px;font-weight:600}
+.dark .kicker{color:var(--lime)}
+.body{flex:1;display:flex;gap:72px;margin-top:52px;min-height:0}
+.col{flex:1;min-width:0}
+.src{position:absolute;left:120px;right:120px;bottom:30px;display:flex;justify-content:space-between;gap:40px;font-size:24px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+.dark .src{color:#a9bcad;border-top-color:#2e5443}
+.src a{color:inherit}
+.src .n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.seal{display:inline-flex;align-items:center;gap:14px;font-size:24px;border:2px solid currentColor;border-radius:999px;padding:8px 22px;opacity:.9}
+.lime{color:var(--lime)}
+.big{font-family:Georgia,serif;font-size:150px;line-height:.95;color:var(--forest);letter-spacing:-.03em}
+.dark .big{color:var(--lime)}
+ul.clean{list-style:none;margin:0;padding:0}
+ul.clean li{position:relative;padding-left:40px;margin:0 0 26px}
+ul.clean li:before{content:"";position:absolute;left:0;top:.52em;width:18px;height:18px;background:var(--forest);border-radius:3px}
+.dark ul.clean li:before{background:var(--lime)}
+.muted{color:var(--muted)}
+.dark .muted{color:#b9c9bd}
+.fill{display:inline-block;border:2px dashed var(--rust);color:var(--rust);padding:0 12px;border-radius:6px;font-family:"Segoe UI",sans-serif;font-size:.8em;line-height:1.3;white-space:nowrap}
+.dark .fill{border-color:var(--lime);color:var(--lime)}
+.mask{font-family:Consolas,"Cascadia Mono",monospace;letter-spacing:.02em}
+/* capa */
+.cover{padding:0;flex-direction:row}
+.cover .l{flex:1.15;padding:120px 0 0 120px;display:flex;flex-direction:column}
+.cover .r{flex:1;display:flex;align-items:center;justify-content:center;padding-right:80px}
+.word{font-family:Georgia,serif;font-size:200px;line-height:1;color:var(--lime);letter-spacing:-.03em}
+.cover .q{font-family:Georgia,serif;font-style:italic;font-size:64px;line-height:1.12;margin-top:28px;max-width:880px}
+.cover .lead{font-size:34px;margin-top:48px;max-width:860px;color:#d9e2d3}
+.cover .seal{margin-top:auto;margin-bottom:96px;align-self:flex-start;color:var(--lime)}
+/* problema */
+.stat{background:var(--forest);color:var(--paper);border-radius:18px;padding:56px 56px 48px;display:flex;flex-direction:column}
+.stat .big{color:var(--lime);font-size:170px}
+.stat p{font-size:32px;margin-top:20px}
+.stat small{display:block;font-size:24px;color:#b9c9bd;margin-top:auto;padding-top:28px}
+/* insight */
+.legend{display:flex;flex-direction:column;gap:12px;margin-top:22px;font-size:26px}
+.legend span{display:flex;align-items:center;gap:18px}
+.sw{width:34px;height:34px;border-radius:4px;flex:none}
+/* dados */
+.flow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:34px;margin-top:8px}
+.box{border:2px solid var(--forest);border-radius:16px;padding:30px 32px;background:#fff}
+.box h3{font-size:34px;margin-bottom:16px}
+.box p{font-size:27px;line-height:1.35;margin-bottom:12px}
+.box p b{font-weight:600}
+.box .tag{font-size:24px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600;margin-bottom:10px}
+.merge{display:flex;align-items:center;gap:30px;margin-top:34px}
+.merge .bar{flex:1;height:4px;background:var(--forest)}
+.merge .core{background:var(--forest);color:var(--lime);font-family:Georgia,serif;font-size:36px;padding:18px 40px;border-radius:999px;white-space:nowrap}
+.nums{display:flex;gap:56px;margin-top:38px;font-size:27px;color:var(--muted)}
+.nums b{display:block;font-family:Georgia,serif;font-weight:400;font-size:52px;color:var(--forest);line-height:1.05}
+/* metodo */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:28px}
+.step{background:#fff;border-radius:16px;padding:32px 30px;border-top:10px solid var(--forest);position:relative}
+.step .i{font-family:Georgia,serif;font-size:56px;color:var(--forest);line-height:1}
+.step h3{font-size:34px;margin:12px 0 14px}
+.step p{font-size:26px;line-height:1.35;color:#2c3d33}
+.chips{display:flex;flex-wrap:wrap;gap:16px;margin-top:40px}
+.chip{display:flex;align-items:center;gap:14px;border:2px solid var(--forest);border-radius:12px;padding:10px 20px 10px 10px;font-size:26px;background:#fff}
+.chip b{background:var(--forest);color:var(--lime);border-radius:8px;min-width:54px;text-align:center;padding:2px 8px;font-family:Georgia,serif;font-weight:400;font-size:28px}
+.rule{margin-top:34px;font-size:28px;background:#e7ecd8;border-left:8px solid var(--forest);padding:18px 28px;border-radius:0 12px 12px 0}
+/* demo */
+.shot{border-radius:14px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.35);border:2px solid #2e5443;background:#0f2a1f;line-height:0}
+.shot img{width:100%;display:block}
+.cap{font-size:24px;color:#b9c9bd;margin-top:14px}
+ol.path{margin:0;padding:0;list-style:none;counter-reset:p}
+ol.path li{counter-increment:p;position:relative;padding-left:76px;margin-bottom:34px}
+ol.path li:before{content:counter(p);position:absolute;left:0;top:-2px;width:54px;height:54px;border-radius:50%;background:var(--lime);color:var(--forest);font-family:Georgia,serif;font-size:32px;display:flex;align-items:center;justify-content:center}
+ol.path b{display:block;font-family:Georgia,serif;font-weight:400;font-size:38px;color:var(--lime)}
+ol.path span{font-size:28px;color:#d9e2d3}
+/* resultados */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.kpi{background:#fff;border-radius:16px;padding:22px 26px}
+.kpi b{display:block;font-family:Georgia,serif;font-weight:400;font-size:62px;line-height:1;color:var(--forest)}
+.kpi span{font-size:24px;line-height:1.3;display:block;margin-top:10px;color:#2c3d33}
+table.top{width:100%;border-collapse:collapse;font-size:28px;margin-top:24px}
+table.top th{font-size:24px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);text-align:left;font-weight:600;padding:0 14px 10px;border-bottom:2px solid var(--forest)}
+table.top td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.top td.sc{font-family:Georgia,serif;font-size:36px;color:var(--forest);text-align:right}
+.fl{display:inline-block;background:var(--forest);color:var(--lime);border-radius:6px;padding:0 10px;margin-right:6px;font-size:24px;font-weight:600}
+.sim{font-size:24px;border:2px solid #b8860b;color:#8a6508;border-radius:6px;padding:0 8px;margin-left:8px}
+/* confiabilidade */
+.bars{display:flex;flex-direction:column;gap:22px;margin-top:24px}
+.brow{display:grid;grid-template-columns:250px 1fr 110px;align-items:center;gap:20px;font-size:28px}
+.track{height:46px;background:#e3e7d6;border-radius:8px;overflow:hidden}
+.track i{display:block;height:100%;background:var(--forest)}
+.track i.base{background:#9aa894}
+.brow .v{font-family:Georgia,serif;font-size:36px;text-align:right}
+.gauge{background:var(--forest);color:var(--paper);border-radius:18px;padding:44px 48px;display:flex;flex-direction:column;height:100%}
+.gauge .big{font-size:150px;color:var(--lime)}
+.gtrack{position:relative;height:40px;background:#2e5443;border-radius:8px;margin:34px 0 14px}
+.gtrack i{position:absolute;left:0;top:0;bottom:0;background:var(--lime);border-radius:8px}
+.gtrack em{position:absolute;top:-14px;bottom:-14px;width:5px;background:var(--paper)}
+.gl{display:flex;justify-content:space-between;font-size:24px;color:#b9c9bd}
+/* limites */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:64px}
+.two h3{margin-bottom:28px;padding-bottom:14px;border-bottom:3px solid var(--forest)}
+.two li{font-size:29px}
+/* nav */
+#bar{position:fixed;left:0;bottom:0;height:6px;background:var(--lime);transition:width .25s;z-index:5}
+#hint{position:fixed;right:18px;bottom:16px;font:14px "Segoe UI",sans-serif;color:#7d9486;z-index:5;opacity:.0;transition:opacity .4s}
+body:hover #hint{opacity:.8}
+@media print{
+  @page{size:1920px 1080px;margin:0}
+  html,body{overflow:visible;background:#fff}
+  #deck{position:static;transform:none}
+  .slide{display:flex!important;position:relative;page-break-after:always;width:1920px;height:1080px}
+  #bar,#hint{display:none}
+}
+</style>
+</head>
+<body>
+<div id="deck">
+
+<!-- 1 · CAPA -->
+<section class="slide dark cover">
+  <div class="l">
+    <div class="word">Lastro</div>
+    <div class="q">O volume declarado tem lastro na floresta?</div>
+    <p class="lead">Cruzamos cada árvore que o detentor declara ao IBAMA como explorada com o que o satélite mostra. Polo AMACRO, Sul do Amazonas e Porto Velho.</p>
+    <span class="seal">Resultado experimental de triagem · não constitui prova nem auto de infração</span>
+  </div>
+  <div class="r">{{SVG_COVER}}</div>
+</section>
+
+<!-- 2 · PROBLEMA -->
+<section class="slide">
+  <div class="kicker">O problema</div>
+  <h2>Documento legal não garante origem legal</h2>
+  <div class="body">
+    <div class="col" style="flex:1.25">
+      <ul class="clean">
+        <li>Um plano de manejo autoriza um volume por espécie. Se o inventário <b>superestima</b> esse volume, sobra crédito no sistema.</li>
+        <li>Esse crédito pode acompanhar madeira retirada de outro lugar. É o chamado <b>esquentamento</b>, documentado em campo por Brancalion et al. (2018).</li>
+        <li>O saldo de volume no sistema não diz se a árvore saiu, de fato, daquela floresta.</li>
+      </ul>
+    </div>
+    <div class="col stat">
+      <div class="big">32%</div>
+      <p>da área de exploração madeireira mapeada no Pará entre ago/2024 e jul/2025 ocorreu <b>sem autorização</b>: 19.126 de 60.664 ha.</p>
+      <small>Rede Simex (Imazon, ICV, Imaflora), 2026. Dado do Pará, não do polo AMACRO.</small>
+    </div>
+  </div>
+  <footer class="src"><span>Fontes: <a href="https://imazon.org.br/noticias/para-registra-maior-exploracao-madeireira-dos-ultimos-cinco-anos">imazon.org.br (Rede Simex, 04/11/2026)</a> · Brancalion et al., Sci. Adv. 2018, <a href="https://doi.org/10.1126/sciadv.aat1192">doi.org/10.1126/sciadv.aat1192</a></span><span class="n">2 / 10</span></footer>
+</section>
+
+<!-- 3 · INSIGHT -->
+<section class="slide dark">
+  <div class="kicker">O insight</div>
+  <h2>O IBAMA publica cada árvore declarada como explorada. Com coordenada.</h2>
+  <div class="body">
+    <div class="col">
+      <div class="big">329.288</div>
+      <p style="font-size:32px;margin-top:14px">árvores declaradas no polo AMACRO desde 2022, com espécie, volume, data e posição (IF100).</p>
+      <p style="font-size:32px;margin-top:34px">Se a árvore saiu, a floresta abriu. O Lastro mede, célula por célula de 1 ha, se a abertura vista do espaço <b class="lime">comporta o volume declarado</b>.</p>
+      <p class="muted" style="font-size:26px;margin-top:30px">O dado chega sem sinal nas coordenadas e, às vezes, com latitude e longitude trocadas. Corrigimos e testamos antes de usar.</p>
+    </div>
+    <div class="col" style="flex:.9;display:flex;flex-direction:column;align-items:center">
+      {{SVG_CELLS}}
+      <div class="legend">
+        <span><i class="sw" style="background:#c5f67c"></i>distúrbio compatível com o volume declarado</span>
+        <span><i class="sw" style="border:4px dashed #ff9a7a"></i>volume declarado sem abertura compatível</span>
+        <span><svg width="34" height="34"><circle cx="17" cy="17" r="7" fill="#f3f4e8"/></svg>árvore declarada (IF100)</span>
+      </div>
+    </div>
+  </div>
+  <footer class="src"><span>Fonte: IBAMA, Volumes Explorados IF100 (dadosabertos.ibama.gov.br), consulta em 06/11/2026</span><span class="n">3 / 10</span></footer>
+</section>
+
+<!-- 4 · DADOS -->
+<section class="slide">
+  <div class="kicker">Dados públicos cruzados</div>
+  <h2>Três perguntas, cinco bases, uma célula de 1 ha</h2>
+  <div class="body" style="flex-direction:column;gap:0">
+    <div class="flow">
+      <div class="box"><div class="tag">O que pode</div><h3>Autorização</h3>
+        <p><b>Sinaflor / PAMGIA</b>: polígono, validade, tipo (POA, ASV, UAS)</p>
+        <p><b>POA e DOF AUTEX</b>: volume autorizado por espécie</p></div>
+      <div class="box"><div class="tag">O que diz que fez</div><h3>Declaração</h3>
+        <p><b>IBAMA IF100</b>: cada árvore explorada, com coordenada, volume e data</p>
+        <p class="muted">DOF Transportes: baixado, próxima etapa</p></div>
+      <div class="box"><div class="tag">O que a floresta mostra</div><h3>Satélite</h3>
+        <p><b>Sentinel-2</b> 10 m (GEE) e <b>CBERS-4A</b> 2 m (INPE, leitura por janela)</p>
+        <p><b>DETER / PRODES</b>: rótulos do INPE para treinar</p></div>
+    </div>
+    <div class="merge"><span class="bar"></span><span class="core">regras + volume com incerteza, por célula e por UPA</span><span class="bar"></span></div>
+    <div class="nums">
+      <div><b>1.142</b>autorizações no polo</div>
+      <div><b>329.288</b>árvores declaradas</div>
+      <div><b>56.257</b>alertas DETER</div>
+      <div><b>40.122</b>polígonos PRODES</div>
+    </div>
+  </div>
+  <footer class="src"><span>IBAMA (Sinaflor, IF100, DOF, PAMGIA) · INPE TerraBrasilis e BDC · Copernicus/GEE. Amazonia-1 (64 m) descartado: pixel maior que a clareira.</span><span class="n">4 / 10</span></footer>
+</section>
+
+<!-- 5 · METODO -->
+<section class="slide">
+  <div class="kicker">Método</div>
+  <h2>Da imagem ao indício, com a incerteza à vista</h2>
+  <div class="body" style="flex-direction:column;gap:0">
+    <div class="steps">
+      <div class="step"><div class="i">1</div><h3>Detector</h3><p>LightGBM sobre o par Sentinel-2 pré/pós. Treinado só com rótulos do INPE, nunca com o IF100.</p></div>
+      <div class="step"><div class="i">2</div><h3>Células de 1 ha</h3><p>Volume declarado de um lado; fração de distúrbio e Δ-índices do outro.</p></div>
+      <div class="step"><div class="i">3</div><h3>Volume p10–p90</h3><p>Regressão quantílica, ajuste conformal e Monte Carlo por UPA (10 mil amostras).</p></div>
+      <div class="step"><div class="i">4</div><h3>7 assinaturas</h3><p>Cada uma com regra, limiar, evidência e fonte. O score só ordena a fila.</p></div>
+    </div>
+    <div class="chips">
+      <span class="chip"><b>A</b>volume sem lastro</span>
+      <span class="chip"><b>B</b>distúrbio sem declaração</span>
+      <span class="chip"><b>C</b>árvore fora do polígono</span>
+      <span class="chip"><b>D</b>acima do autorizado</span>
+      <span class="chip"><b>E</b>fora da validade</span>
+      <span class="chip"><b>F2</b>corte raso além da área</span>
+      <span class="chip"><b>F6</b>UC / TI / embargo</span>
+    </div>
+    <p class="rule">A assinatura A só abre quando o declarado supera o <b>p90</b> estimado para a UPA <b>e</b> a divergência está concentrada (≥ 5 células contíguas ou ≥ 10% do volume).</p>
+  </div>
+  <footer class="src"><span>Regras e limiares: pipeline/rules/flags.py · fórmulas em docs/METODO.md</span><span class="n">5 / 10</span></footer>
+</section>
+
+<!-- 6 · DEMO -->
+<section class="slide dark">
+  <div class="kicker">Demo</div>
+  <h2>Do ranking ao dossiê em três cliques</h2>
+  <div class="body" style="gap:64px">
+    <div class="col" style="flex:1.75">
+      <div class="shot">{{IMG_DOSSIE}}</div>
+      <p class="cap">{{CAP_DOSSIE}}</p>
+    </div>
+    <div class="col">
+      <ol class="path">
+        <li><b>Triagem</b><span>fila do polo ordenada por prioridade, com filtros por UF, tipo e indício</span></li>
+        <li><b>Dossiê</b><span>antes e depois (Sentinel-2 e CBERS-4A), células, árvores; cada evidência acende no mapa</span></li>
+        <li><b>Confiabilidade</b><span>métricas fora da amostra e cobertura do intervalo</span></li>
+      </ol>
+    </div>
+  </div>
+  <footer class="src"><span>App local: scripts/serve.ps1 · AUTEX visível no app, sem nome e sem CPF/CNPJ</span><span class="n">6 / 10</span></footer>
+</section>
+
+<!-- 7 · RESULTADOS -->
+<section class="slide">
+  <div class="kicker">Resultados · polo AMACRO</div>
+  <h2>O que a triagem encontrou</h2>
+  <div class="body" style="flex-direction:column;gap:0;margin-top:40px">
+    <div class="kpis">
+      <div class="kpi"><b>{{K_AVALIADAS}}</b><span>autorizações avaliadas pelas regras documentais</span></div>
+      <div class="kpi"><b>46</b><span>com indício documental: C 11 · D 10 · E 29</span></div>
+      <div class="kpi"><b>{{K_IMAGEM}}</b><span>analisadas também com imagem de satélite</span></div>
+      <div class="kpi"><b>{{K_INDICIO}}</b><span>{{K_INDICIO_LBL}}</span></div>
+    </div>
+    {{TOP_TABLE}}
+  </div>
+  <footer class="src"><span>{{SRC_RESULTADOS}}</span><span class="n">7 / 10</span></footer>
+</section>
+
+<!-- 8 · CONFIABILIDADE -->
+<section class="slide">
+  <div class="kicker">Confiabilidade</div>
+  <h2>Medida em áreas que o modelo não viu</h2>
+  <div class="body">
+    <div class="col" style="flex:1.2">
+      <h3>Detector de distúrbio</h3>
+      <p class="muted" style="font-size:26px;margin-top:8px">GroupKFold espacial, blocos de 5 km, {{DET_NPX}} pixels fora da amostra</p>
+      <div class="bars">
+        <div class="brow"><span>IoU LightGBM</span><span class="track"><i style="width:{{DET_IOU_W}}%"></i></span><span class="v">{{DET_IOU}}</span></div>
+        <div class="brow"><span>IoU baseline</span><span class="track"><i class="base" style="width:{{BAS_IOU_W}}%"></i></span><span class="v">{{BAS_IOU}}</span></div>
+        <div class="brow"><span>F1 LightGBM</span><span class="track"><i style="width:{{DET_F1_W}}%"></i></span><span class="v">{{DET_F1}}</span></div>
+        <div class="brow"><span>F1 baseline</span><span class="track"><i class="base" style="width:{{BAS_F1_W}}%"></i></span><span class="v">{{BAS_F1}}</span></div>
+      </div>
+      <p style="font-size:28px;margin-top:30px">Por tipo (F1): corte raso <b>{{F1_RASO}}</b> · seletivo e degradação <b>{{F1_SEL}}</b>. O corte seletivo é o mais difícil; por isso a decisão é por célula e por UPA, não por pixel.</p>
+    </div>
+    <div class="col">
+      <div class="gauge">
+        <div style="font-size:28px">Volume: cobertura empírica do intervalo p10–p90</div>
+        <div class="big" style="margin-top:14px">{{COB}}</div>
+        <div class="gtrack"><i style="width:{{COB_W}}%"></i><em style="left:80%"></em></div>
+        <div class="gl"><span>0%</span><span>nominal 80%</span><span>100%</span></div>
+        <p style="font-size:26px;margin-top:26px;color:#d9e2d3">{{COB_TXT}}</p>
+      </div>
+    </div>
+  </div>
+  <footer class="src"><span>data/artifacts/metrics/detector.json · calibracao.json · protocolos em docs/MODEL_CARD.md</span><span class="n">8 / 10</span></footer>
+</section>
+
+<!-- 9 · LIMITES -->
+<section class="slide">
+  <div class="kicker">Limites e salvaguardas</div>
+  <h2>Uma ferramenta de triagem, não de acusação</h2>
+  <div class="body two">
+    <div>
+      <h3>O que pode enganar</h3>
+      <ul class="clean">
+        <li>Clareira de uma árvore (200–600 m²) é quase sub-pixel e fecha em meses</li>
+        <li>Nuvem: célula sem observação nunca vira prova de ausência</li>
+        <li>Rótulos DETER/PRODES perdem clareiras pequenas</li>
+        <li>Calibração pode herdar divergências não detectadas</li>
+        <li>Coordenadas IF100 com erro: 810 árvores a mais de 5 km tratadas como qualidade cadastral</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Como o Lastro se protege</h3>
+      <ul class="clean">
+        <li>Linguagem de indício; todo dossiê diz “não constitui prova”</li>
+        <li>Cada indício mostra regra, limiar, evidência e fonte para revisão humana</li>
+        <li>Dado ausente vira “não avaliado”, nunca “sem indício”</li>
+        <li>Vizinho licenciado é excluído da área analisada</li>
+        <li>Sem nome, CPF ou CNPJ; AUTEX mascarado em público</li>
+      </ul>
+    </div>
+  </div>
+  <footer class="src"><span>docs/MODEL_CARD.md · usos pretendidos e não pretendidos</span><span class="n">9 / 10</span></footer>
+</section>
+
+<!-- 10 · IMPACTO -->
+<section class="slide dark">
+  <div class="kicker">Impacto e próximos passos</div>
+  <h2>Fiscalização que começa onde o volume não fecha</h2>
+  <div class="body two" style="gap:72px">
+    <ul class="clean">
+      <li><b class="lime">IBAMA e OEMAs</b>: fila semanal nas autorizações vigentes; a API e os dossiês já existem</li>
+      <li><b class="lime">CBERS-4A e satélites nacionais</b>: 2 m em todos os casos de topo reduz a incerteza por célula</li>
+      <li><b class="lime">Inventário 100% em campo</b>: parceria para verdade de campo e recalibração</li>
+    </ul>
+    <ul class="clean">
+      <li><b class="lime">Deep learning</b>: U-Net siamesa treinada no Colab (IoU {{DL_IOU}} em protocolo próprio), a integrar após validação comparável</li>
+      <li><b class="lime">DOF Transportes</b>: confrontar volume transportado com o estimado</li>
+      <li><b class="lime">Escala</b>: o método não depende do polo; o próximo passo é a Amazônia Legal</li>
+    </ul>
+  </div>
+  <p style="font-family:Georgia,serif;font-size:46px;margin:0;color:var(--lime)">Lastro: o volume declarado tem lastro na floresta?</p>
+  <footer class="src"><span>Resultado experimental de triagem · não constitui prova nem auto de infração</span><span class="n">10 / 10</span></footer>
+</section>
+
+</div>
+<div id="bar"></div>
+<div id="hint">setas, espaço ou clique · F para tela cheia</div>
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')),i=0,bar=document.getElementById('bar');
+  function fit(){var s=Math.min(innerWidth/1920,innerHeight/1080);document.documentElement.style.setProperty('--s',s)}
+  function go(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach(function(s,k){s.classList.toggle('on',k===i)});bar.style.width=((i+1)/slides.length*100)+'%';if(location.hash!=='#'+(i+1))history.replaceState(null,'','#'+(i+1))}
+  addEventListener('resize',fit);fit();
+  addEventListener('keydown',function(e){
+    if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].indexOf(e.key)>=0){e.preventDefault();go(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].indexOf(e.key)>=0){e.preventDefault();go(i-1)}
+    else if(e.key==='Home')go(0);else if(e.key==='End')go(slides.length-1);
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen()}
+  });
+  addEventListener('click',function(e){if(e.target.closest('a'))return;go(e.clientX<innerWidth/3?i-1:i+1)});
+  addEventListener('hashchange',function(){var n=parseInt(location.hash.slice(1),10);if(n)go(n-1)});
+  var n=parseInt(location.hash.slice(1),10);go(n?n-1:0);
+})();
+</script>
+</body>
+</html>

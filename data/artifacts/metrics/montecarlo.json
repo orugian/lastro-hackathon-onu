@@ -1,0 +1,65 @@
+{
+ "descricao": "Monte Carlo do volume por UPA (pipeline.volume.estimar.monte_carlo_upa)",
+ "n_amostras": 10000,
+ "seed": 0,
+ "celula": "CDF linear por partes pelos quantis (0,1;p10),(0,5;p50),(0,9;p90) do LightGBM quantílico + CQR; caudas extrapoladas linearmente, truncadas em 0",
+ "correlacao_espacial": "fator comum por UPA ~ lognormal(0, sigma_upa) multiplicando todas as células",
+ "sigma_upa": 0.6475353813679239,
+ "sigma_upa_origem": "desvio-padrão de log((declarado+1)/(p50 estimado+1)) por UPA, fora da amostra",
+ "conformal_q_m3_ha": 0.03856207481172665,
+ "subconjuntos": {
+  "sem_lastro_excesso": "Σ(vol_declarado − vol amostrado) nas células sem_lastro",
+  "nao_declarado": "Σ vol amostrado nas células nao_declarado"
+ },
+ "corte_raso": {
+  "V": "A × V_ha",
+  "V_ha_estoque": "Normal(volume autorizado/área autorizada, 15%)",
+  "V_ha_agb": "AGB/(WD×BEF)×f_com",
+  "WD": "Normal(0,62; 0,05) g/cm³",
+  "BEF": "Normal(1,6; 0,15)",
+  "f_com": "Uniforme(0,3; 0,5)"
+ },
+ "metricas_cv": {
+  "celula_antes": {
+   "r2": -0.012507401487981573,
+   "mae_m3_ha": 11.588901134746349,
+   "cobertura_p10_p90": 0.7898563368812889,
+   "largura_media_m3_ha": 30.755335989597853
+  },
+  "celula_conformal": {
+   "r2": -0.012507401487981573,
+   "mae_m3_ha": 11.588901134746349,
+   "cobertura_p10_p90": 0.8345838422613855,
+   "largura_media_m3_ha": 32.69191216957392
+  },
+  "upa_soma_quantis_antes": {
+   "r2": 0.5346131814286857,
+   "mae_m3": 1495.0219379208445,
+   "erro_rel_mediano": 0.5117077434542259,
+   "cobertura_p10_p90": 0.9583333333333334,
+   "n_upas": 72
+  },
+  "upa_mc_antes": {
+   "r2": 0.2878467988809744,
+   "mae_m3": 1551.1000629517885,
+   "erro_rel_mediano": 0.3384097649553044,
+   "cobertura_p10_p90": 0.875,
+   "n_upas": 72
+  },
+  "upa_mc_conformal": {
+   "r2": 0.1266105585775118,
+   "mae_m3": 1616.0194587190838,
+   "erro_rel_mediano": 0.32239974749842154,
+   "cobertura_p10_p90": 0.8888888888888888,
+   "n_upas": 72
+  },
+  "sigma_upa": 0.6475353813679239,
+  "q_conformal_folds_m3_ha": [
+   0.0,
+   0.075,
+   0.099,
+   9.392
+  ]
+ },
+ "gerado_em": "2026-11-06T03:54:10+00:00"
+}
