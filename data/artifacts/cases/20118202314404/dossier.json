@@ -26,8 +26,8 @@
   "p50": null,
   "p90": null
  },
- "area_disturbio_ha": 274.57,
- "area_disturbio_fora_ha": 9.56,
+ "area_disturbio_ha": 268.63,
+ "area_disturbio_fora_ha": 3.74,
  "n_arvores_declaradas": null,
  "flags": [
   {
@@ -69,7 +69,7 @@
  "score": 0.3849,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T07:58:49+00:00",
+ "processado_em": "2026-11-06T14:49:58+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -82,8 +82,8 @@
    "evidencias": [
     {
      "tipo": "geometria",
-     "descricao": "9,6 ha de distúrbio em 2 polígono(s) fora da UPA, até 303 m do limite",
-     "valor": 9.56,
+     "descricao": "3,7 ha de distúrbio em 3 polígono(s) fora da UPA, até 302 m do limite",
+     "valor": 3.74,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": {
@@ -93,8 +93,8 @@
     },
     {
      "tipo": "texto",
-     "descricao": "Contexto regional (não computado): 73,0 ha de distúrbio em 18 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
-     "valor": 72.96,
+     "descricao": "Contexto regional (não computado): 50,2 ha de distúrbio em 2 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
+     "valor": 50.21,
      "unidade": "ha",
      "camada": null,
      "filtro": null,
@@ -102,8 +102,8 @@
     },
     {
      "tipo": "documento",
-     "descricao": "5 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente DESMATAMENTO_CR de 2024-06-02",
-     "valor": 5.0,
+     "descricao": "4 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente DESMATAMENTO_CR de 2024-06-02",
+     "valor": 4.0,
      "unidade": "alertas",
      "camada": "deter",
      "filtro": null,
@@ -111,7 +111,7 @@
     }
    ],
    "volume_m3": null,
-   "area_ha": 9.56
+   "area_ha": 3.74
   },
   {
    "codigo": "F2",
@@ -123,8 +123,8 @@
    "evidencias": [
     {
      "tipo": "metrica",
-     "descricao": "285,8 ha desmatados para 395,6 ha autorizados",
-     "valor": 285.84,
+     "descricao": "271,0 ha desmatados para 395,6 ha autorizados",
+     "valor": 270.98,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": null,
@@ -132,7 +132,7 @@
     }
    ],
    "volume_m3": null,
-   "area_ha": 285.84
+   "area_ha": 270.98
   },
   {
    "codigo": "D",
@@ -165,7 +165,7 @@
    "evidencias": [
     {
      "tipo": "texto",
-     "descricao": "Mudança observada entre 2022-10-05 e 2024-10-05; validade 2023-06-28 a 2024-06-28; área com distúrbio dentro do polígono 274,6 ha",
+     "descricao": "Mudança observada entre 2022-10-05 e 2024-10-05; validade 2023-06-28 a 2024-06-28; área com distúrbio dentro do polígono 268,6 ha",
      "valor": null,
      "unidade": null,
      "camada": null,
@@ -250,7 +250,7 @@
   {
    "id": "prob",
    "sensor": "Modelo",
-   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM)",
+   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM confirmado pela U-Net)",
    "data": "2022-10-05/2024-10-05",
    "png": "img/prob.png",
    "bounds": [
@@ -276,7 +276,7 @@
   {
    "nome": "Área desmatada",
    "distribuicao": "fixa",
-   "valor": 285.8398883536289,
+   "valor": 270.9795068851928,
    "unidade": "ha",
    "origem": "detector LightGBM sobre Sentinel-2"
   },
@@ -345,7 +345,7 @@
   }
  ],
  "modelo": {
-  "detector": "lightgbm-v1 (limiar 0.37)",
+  "detector": "lightgbm-and-unet (limiar 0.37); volume: lightgbm (limiar 0.37)",
   "calibracao": "lgbm-quantil-v1+cqr",
   "score": "1 − exp(−Σ peso × severidade × confiança)",
   "s2_meta": {
@@ -385,7 +385,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T07:56:07+00:00",
+   "consultado_em": "2026-11-06T14:47:57+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },
@@ -412,7 +412,7 @@
   "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
   "Janelas Sentinel-2: pré 2022-06-01 a 2022-10-05; pós 2024-06-01 a 2024-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 52 e 52.",
   "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
-  "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
+  "Detecção espacial por LightGBM confirmado pela U-Net (deep learning) e volume calibrado sobre o LightGBM, ambos treinados com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
   "Camadas de UC/TI/embargo não integradas: F6 não avaliado."
  ],
  "linha_do_tempo": [

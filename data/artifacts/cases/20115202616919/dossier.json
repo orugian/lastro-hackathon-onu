@@ -27,14 +27,14 @@
   "p90": 0.0
  },
  "area_disturbio_ha": 0.0,
- "area_disturbio_fora_ha": 1.03,
+ "area_disturbio_fora_ha": 0.94,
  "n_arvores_declaradas": null,
  "flags": [
   {
    "codigo": "B",
    "titulo": "Corte raso fora do polígono autorizado",
-   "status": "indicio",
-   "severidade": "media",
+   "status": "inconclusivo",
+   "severidade": "baixa",
    "confianca": 0.65
   },
   {
@@ -66,24 +66,24 @@
    "confianca": 0.0
   }
  ],
- "score": 0.3229,
+ "score": 0.0,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T07:57:57+00:00",
+ "processado_em": "2026-11-06T14:49:53+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
    "codigo": "B",
    "titulo": "Corte raso fora do polígono autorizado",
-   "status": "indicio",
-   "severidade": "media",
+   "status": "inconclusivo",
+   "severidade": "baixa",
    "confianca": 0.65,
    "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização e adjacente (borda a ≤ 500 m da UPA; indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
    "evidencias": [
     {
      "tipo": "geometria",
-     "descricao": "1,0 ha de distúrbio em 1 polígono(s) fora da UPA, até 470 m do limite",
-     "valor": 1.03,
+     "descricao": "0,9 ha de distúrbio em 1 polígono(s) fora da UPA, até 470 m do limite",
+     "valor": 0.94,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": {
@@ -93,20 +93,16 @@
     },
     {
      "tipo": "texto",
-     "descricao": "Contexto regional (não computado): 19,1 ha de distúrbio em 13 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
-     "valor": 19.1,
+     "descricao": "Contexto regional (não computado): 12,1 ha de distúrbio em 7 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
+     "valor": 12.08,
      "unidade": "ha",
      "camada": null,
      "filtro": null,
      "fonte": "s2"
     }
    ],
-   "volume_m3": {
-    "p10": 44.364781499780484,
-    "p50": 54.61785600523484,
-    "p90": 65.21605453886083
-   },
-   "area_ha": 1.03
+   "volume_m3": null,
+   "area_ha": 0.94
   },
   {
    "codigo": "F2",
@@ -249,7 +245,7 @@
   {
    "id": "prob",
    "sensor": "Modelo",
-   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM)",
+   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM confirmado pela U-Net)",
    "data": "2025-10-05/2026-10-05",
    "png": "img/prob.png",
    "bounds": [
@@ -351,7 +347,7 @@
   }
  ],
  "modelo": {
-  "detector": "lightgbm-v1 (limiar 0.37)",
+  "detector": "lightgbm-and-unet (limiar 0.37); volume: lightgbm (limiar 0.37)",
   "calibracao": "lgbm-quantil-v1+cqr",
   "score": "1 − exp(−Σ peso × severidade × confiança)",
   "s2_meta": {
@@ -391,7 +387,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T07:56:07+00:00",
+   "consultado_em": "2026-11-06T14:47:57+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },
@@ -418,7 +414,7 @@
   "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
   "Janelas Sentinel-2: pré 2025-06-01 a 2025-10-05; pós 2026-06-01 a 2026-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 37 e 38.",
   "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
-  "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
+  "Detecção espacial por LightGBM confirmado pela U-Net (deep learning) e volume calibrado sobre o LightGBM, ambos treinados com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
   "Camadas de UC/TI/embargo não integradas: F6 não avaliado."
  ],
  "linha_do_tempo": [

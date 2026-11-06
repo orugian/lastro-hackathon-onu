@@ -222,7 +222,7 @@ body:hover #hint{opacity:.8}
   <h2>Da imagem ao indício, com a incerteza à vista</h2>
   <div class="body" style="flex-direction:column;gap:0">
     <div class="steps">
-      <div class="step"><div class="i">1</div><h3>Detector</h3><p>LightGBM sobre o par Sentinel-2 pré/pós. Treinado só com rótulos do INPE, nunca com o IF100.</p></div>
+      <div class="step"><div class="i">1</div><h3>Detector</h3><p>LightGBM confirmado por U-Net (deep learning) sobre o par Sentinel-2 pré/pós. Treinados só com rótulos do INPE, nunca com o IF100.</p></div>
       <div class="step"><div class="i">2</div><h3>Células de 1 ha</h3><p>Volume declarado de um lado; fração de distúrbio e Δ-índices do outro.</p></div>
       <div class="step"><div class="i">3</div><h3>Volume p10–p90</h3><p>Regressão quantílica, ajuste conformal e Monte Carlo por UPA (10 mil amostras).</p></div>
       <div class="step"><div class="i">4</div><h3>7 assinaturas</h3><p>Cada uma com regra, limiar, evidência e fonte. O score só ordena a fila.</p></div>
@@ -291,7 +291,7 @@ body:hover #hint{opacity:.8}
       </div>
       <p style="font-size:25px;margin-top:14px">F1 <b>{{DET_F1}}</b> × {{BAS_F1}} · por tipo: corte raso <b>{{F1_RASO}}</b>, seletivo/degradação <b>{{F1_SEL}}</b></p>
       <div class="dl">
-        <p><b>Deep learning (Colab):</b> U-Net siamesa IoU <b>{{DL_IOU}}</b> × LightGBM {{DL_LGB_IOU}} × Otsu {{DL_OTSU_IOU}} nos mesmos {{DL_NPX}} px (blocos de 25 km). Ganho de +{{DL_GAIN}} de IoU sobre o LightGBM. Próximo passo: exportar os pesos e usar no pipeline.</p>
+        <p><b>Deep learning em uso:</b> U-Net siamesa (Colab, IoU <b>{{DL_IOU}}</b> × LightGBM {{DL_LGB_IOU}}) roda no pipeline como <b>segunda opinião</b>: o pixel só é distúrbio se LightGBM e U-Net concordam. Em blocos nunca vistos, o falso alarme caiu de <b>16,1% para 9,2%</b> (precisão 0,88).</p>
         {{IMG_DL}}
         <span>pré · pós · rótulo INPE · probabilidade da U-Net (teste espacial). Protocolos de 5 km e 25 km não são comparáveis entre si.</span>
       </div>
@@ -349,7 +349,7 @@ body:hover #hint{opacity:.8}
       <li><b class="lime">Inventário 100% em campo</b>: parceria para verdade de campo e recalibração</li>
     </ul>
     <ul class="clean">
-      <li><b class="lime">Deep learning</b>: a U-Net siamesa do Colab supera o LightGBM nos mesmos pixels (IoU {{DL_IOU}} × {{DL_LGB_IOU}}); exportar os pesos e usar no pipeline</li>
+      <li><b class="lime">Deep learning</b>: treinar a U-Net com mais chips de floresta manejada para usá-la sozinha (IoU 0,72 × 0,45 em blocos nunca vistos), reduzindo o falso alarme</li>
       <li><b class="lime">DOF Transportes</b>: confrontar volume transportado com o estimado</li>
       <li><b class="lime">Escala</b>: o método não depende do polo; o próximo passo é a Amazônia Legal</li>
     </ul>

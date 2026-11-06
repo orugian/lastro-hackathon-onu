@@ -1,0 +1,185 @@
+{
+  "seed": 42,
+  "modo_rapido": true,
+  "n_chips_alvo": 400,
+  "epocas_max": 10,
+  "workers": 8,
+  "bbox": [
+    -66,
+    -10,
+    -60,
+    -6.5
+  ],
+  "anos": [
+    2022,
+    2023,
+    2024
+  ],
+  "bandas": [
+    "B2",
+    "B3",
+    "B4",
+    "B8",
+    "B11",
+    "B12"
+  ],
+  "chip_px": 224,
+  "resolucao_m": 10,
+  "bloco_m": 25000,
+  "projeto": "project-f5ab0bff-aa9b-4cb2-97d",
+  "aois": [
+    {
+      "autex": "EXEMPLO-AMACRO",
+      "bbox": [
+        -63.12,
+        -7.64,
+        -63.05,
+        -7.58
+      ],
+      "pre": [
+        "2023-06-01",
+        "2023-09-30"
+      ],
+      "pos": [
+        "2024-06-01",
+        "2024-09-30"
+      ]
+    }
+  ],
+  "cloud_probability_lt": 40,
+  "split": [
+    0.7,
+    0.15,
+    0.15
+  ],
+  "threshold": 0.5,
+  "n_chips": 400,
+  "positive_chips": 400,
+  "download_errors": [
+    "IllegalArgumentException: Overlay input is mixed-dimension"
+  ],
+  "normalization_mean": [
+    0.1080000028014183,
+    0.13699999451637268,
+    0.1509999930858612,
+    0.22599999606609344,
+    0.23999999463558197,
+    0.1860000044107437
+  ],
+  "normalization_std": [
+    0.05700000002980232,
+    0.06499999761581421,
+    0.07900000363588333,
+    0.10300000011920929,
+    0.11400000005960464,
+    0.10400000214576721
+  ],
+  "nir_proxy": "B8 (10 m), em lugar de NIR narrow HLS; domain shift",
+  "gpu": "Tesla T4",
+  "modelo": "unet-siamesa",
+  "variant": "unet-siamesa",
+  "fallbacks": [
+    {
+      "model": "prithvi_eo_v2_100_tl",
+      "error": "ImportError: cannot import name 'utils' from 'torchgeo.trainers' (/usr/local/lib/python3.13/dist-packages/torchgeo/trainers/__init__.py)"
+    }
+  ],
+  "epocas_executadas": 9,
+  "treino": [
+    {
+      "epoch": 1,
+      "train": 0.9153335551192477,
+      "val": 0.6034413109654966
+    },
+    {
+      "epoch": 2,
+      "train": 0.6061850723407277,
+      "val": 0.5011152750340061
+    },
+    {
+      "epoch": 3,
+      "train": 0.4623553990404268,
+      "val": 0.4749182393585426
+    },
+    {
+      "epoch": 4,
+      "train": 0.43914090856281734,
+      "val": 0.540706853935684
+    },
+    {
+      "epoch": 5,
+      "train": 0.36765513726121163,
+      "val": 0.5864707460437996
+    },
+    {
+      "epoch": 6,
+      "train": 0.33102503030692937,
+      "val": 0.4505319621251977
+    },
+    {
+      "epoch": 7,
+      "train": 0.314566130496533,
+      "val": 0.4585695815259132
+    },
+    {
+      "epoch": 8,
+      "train": 0.27478596853570464,
+      "val": 0.5144294699033102
+    },
+    {
+      "epoch": 9,
+      "train": 0.2509930902285594,
+      "val": 0.45889996186546655
+    }
+  ],
+  "lr": 0.0001,
+  "fine_tune": "últimos 2/4 blocos Prithvi ou encoder completo ResNet34",
+  "early_stopping_patience": 3,
+  "otsu_threshold": 0.12442535161972046,
+  "lgbm_threshold": 0.30000000000000004,
+  "lgbm_features": 21,
+  "lgbm_params": {
+    "boosting_type": "gbdt",
+    "class_weight": null,
+    "colsample_bytree": 1.0,
+    "importance_type": "split",
+    "learning_rate": 0.05,
+    "max_depth": -1,
+    "min_child_samples": 20,
+    "min_child_weight": 0.001,
+    "min_split_gain": 0.0,
+    "n_estimators": 350,
+    "n_jobs": 2,
+    "num_leaves": 31,
+    "objective": null,
+    "random_state": 42,
+    "reg_alpha": 0.0,
+    "reg_lambda": 0.0,
+    "subsample": 1.0,
+    "subsample_for_bin": 200000,
+    "subsample_freq": 0,
+    "verbosity": -1,
+    "deterministic": true,
+    "force_col_wise": true
+  },
+  "protocolo": "Blocos UTM SIRGAS2000 de 25 km, seed 42, 70/15/15 por bloco; todos os anos de um bloco no mesmo split; chips inteiros dentro do bloco; AOIs de demonstração excluídas. Métricas de pixel apenas no teste espacial. Pixels sem observação e negativos sem NDVI pré > 0,75 ou com histórico de alertas ignorados. DL limiar fixo 0,5; Otsu ajustado no treino; LightGBM limiar ajustado na validação. Matriz [[TN,FP],[FN,TP]]. Amostragem enriquecida em positivos, não estima prevalência regional.",
+  "aoi_results": [
+    {
+      "autex": "EXEMPLO-AMACRO",
+      "epsg": 31980,
+      "width": 773,
+      "height": 665,
+      "valid_fraction": 1.0,
+      "tiles": 20
+    }
+  ],
+  "versions": {
+    "torch": "2.11.0+cu130",
+    "numpy": "2.4.6",
+    "earthengine-api": "1.7.39",
+    "rasterio": "1.5.2",
+    "lightgbm": "4.6.0",
+    "segmentation-models-pytorch": "0.5.0",
+    "terratorch": "1.2.10"
+  }
+}

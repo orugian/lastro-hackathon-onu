@@ -1,0 +1,285 @@
+{
+ "protocolo": "Protocolo local: blocos de 5 km (EPSG:31980) do dataset do detector, excluídos os blocos com chips de treino/validação da U-Net; LightGBM = modelo do fold em que o bloco foi teste (GroupKFold k=5 idêntico ao train.py); mesmos pixels para os 3 métodos.",
+ "n_blocos": 21,
+ "blocos_excluidos_vistos": 11,
+ "blocos_unet_vence": 19,
+ "resultados": {
+  "parede_a_parede": {
+   "unet": {
+    "iou": 0.7287169672093345,
+    "f1": 0.843072615161175,
+    "precisao": 0.7883061971318028,
+    "recall": 0.9060168052193199,
+    "matriz_confusao": [
+     [
+      938274,
+      424318
+     ],
+     [
+      163905,
+      1580077
+     ]
+    ],
+    "n_pixels_teste": 3106574
+   },
+   "lightgbm": {
+    "iou": 0.4519285742639898,
+    "f1": 0.6225217717656407,
+    "precisao": 0.8174487945206756,
+    "recall": 0.5026588577175681,
+    "matriz_confusao": [
+     [
+      1166825,
+      195767
+     ],
+     [
+      867354,
+      876628
+     ]
+    ],
+    "n_pixels_teste": 3106574
+   },
+   "baseline": {
+    "iou": 0.17808803373387366,
+    "f1": 0.30233399989546655,
+    "precisao": 0.9690328905324159,
+    "recall": 0.17910735317222312,
+    "matriz_confusao": [
+     [
+      1352610,
+      9982
+     ],
+     [
+      1431622,
+      312360
+     ]
+    ],
+    "n_pixels_teste": 3106574
+   }
+  },
+  "amostra_balanceada": {
+   "unet": {
+    "iou": 0.6601156069364161,
+    "f1": 0.7952646239554317,
+    "precisao": 0.7125167978498752,
+    "recall": 0.8997575757575758,
+    "matriz_confusao": [
+     [
+      15010,
+      5990
+     ],
+     [
+      1654,
+      14846
+     ]
+    ],
+    "n_pixels_teste": 37500
+   },
+   "lightgbm": {
+    "iou": 0.5541336063475812,
+    "f1": 0.7131093544137023,
+    "precisao": 0.7810245310245311,
+    "recall": 0.656060606060606,
+    "matriz_confusao": [
+     [
+      17965,
+      3035
+     ],
+     [
+      5675,
+      10825
+     ]
+    ],
+    "n_pixels_teste": 37500
+   },
+   "baseline": {
+    "iou": 0.3032261926138744,
+    "f1": 0.46534698939052954,
+    "precisao": 0.9607434098236298,
+    "recall": 0.30703030303030304,
+    "matriz_confusao": [
+     [
+      20793,
+      207
+     ],
+     [
+      11434,
+      5066
+     ]
+    ],
+    "n_pixels_teste": 37500
+   }
+  }
+ },
+ "por_bloco": [
+  {
+   "bloco": "102_1798",
+   "ano": 2024,
+   "px_rotulados": 204022,
+   "positivos": 46406,
+   "iou_unet": 0.4266926720534968,
+   "iou_lgbm": 0.28758815232722146
+  },
+  {
+   "bloco": "102_1805",
+   "ano": 2022,
+   "px_rotulados": 135692,
+   "positivos": 63062,
+   "iou_unet": 0.8970449678800857,
+   "iou_lgbm": 0.7429959942740975
+  },
+  {
+   "bloco": "102_1806",
+   "ano": 2023,
+   "px_rotulados": 71757,
+   "positivos": 46346,
+   "iou_unet": 0.9042155309033281,
+   "iou_lgbm": 0.6778684182646467
+  },
+  {
+   "bloco": "105_1804",
+   "ano": 2024,
+   "px_rotulados": 138151,
+   "positivos": 119185,
+   "iou_unet": 0.9383998304283315,
+   "iou_lgbm": 0.43410955060815604
+  },
+  {
+   "bloco": "105_1814",
+   "ano": 2022,
+   "px_rotulados": 73274,
+   "positivos": 55181,
+   "iou_unet": 0.5439679298086377,
+   "iou_lgbm": 0.6074316359228943
+  },
+  {
+   "bloco": "108_1812",
+   "ano": 2022,
+   "px_rotulados": 134984,
+   "positivos": 57067,
+   "iou_unet": 0.8272032099555142,
+   "iou_lgbm": 0.8661239824671259
+  },
+  {
+   "bloco": "130_1794",
+   "ano": 2023,
+   "px_rotulados": 188883,
+   "positivos": 96305,
+   "iou_unet": 0.5613339358122168,
+   "iou_lgbm": 0.38101538486361763
+  },
+  {
+   "bloco": "131_1793",
+   "ano": 2023,
+   "px_rotulados": 137407,
+   "positivos": 127660,
+   "iou_unet": 0.9736681911124292,
+   "iou_lgbm": 0.1834455922111613
+  },
+  {
+   "bloco": "132_1793",
+   "ano": 2023,
+   "px_rotulados": 138642,
+   "positivos": 80377,
+   "iou_unet": 0.5800753355438442,
+   "iou_lgbm": 0.1894178119121506
+  },
+  {
+   "bloco": "133_1786",
+   "ano": 2023,
+   "px_rotulados": 205147,
+   "positivos": 95098,
+   "iou_unet": 0.4811666485959015,
+   "iou_lgbm": 0.3904486030529812
+  },
+  {
+   "bloco": "133_1793",
+   "ano": 2022,
+   "px_rotulados": 126983,
+   "positivos": 53799,
+   "iou_unet": 0.5614322691975842,
+   "iou_lgbm": 0.19603074574405766
+  },
+  {
+   "bloco": "136_1784",
+   "ano": 2023,
+   "px_rotulados": 204896,
+   "positivos": 90533,
+   "iou_unet": 0.7431136468515334,
+   "iou_lgbm": 0.4202545554436407
+  },
+  {
+   "bloco": "144_1798",
+   "ano": 2024,
+   "px_rotulados": 118451,
+   "positivos": 64731,
+   "iou_unet": 0.9217628820315961,
+   "iou_lgbm": 0.9184822705714071
+  },
+  {
+   "bloco": "146_1796",
+   "ano": 2022,
+   "px_rotulados": 137360,
+   "positivos": 51359,
+   "iou_unet": 0.6405712099961749,
+   "iou_lgbm": 0.6026888017517951
+  },
+  {
+   "bloco": "148_1796",
+   "ano": 2023,
+   "px_rotulados": 91556,
+   "positivos": 42837,
+   "iou_unet": 0.7938055184340854,
+   "iou_lgbm": 0.6636712519149071
+  },
+  {
+   "bloco": "149_1794",
+   "ano": 2023,
+   "px_rotulados": 234541,
+   "positivos": 190425,
+   "iou_unet": 0.8506172665055792,
+   "iou_lgbm": 0.483023587407721
+  },
+  {
+   "bloco": "149_1795",
+   "ano": 2023,
+   "px_rotulados": 209616,
+   "positivos": 98200,
+   "iou_unet": 0.49484723669627645,
+   "iou_lgbm": 0.14374913278756765
+  },
+  {
+   "bloco": "150_1793",
+   "ano": 2024,
+   "px_rotulados": 231114,
+   "positivos": 79061,
+   "iou_unet": 0.7021652378133771,
+   "iou_lgbm": 0.3224596167239559
+  },
+  {
+   "bloco": "154_1800",
+   "ano": 2024,
+   "px_rotulados": 32054,
+   "positivos": 22186,
+   "iou_unet": 0.8950298531547523,
+   "iou_lgbm": 0.8686259001789951
+  },
+  {
+   "bloco": "155_1789",
+   "ano": 2023,
+   "px_rotulados": 194630,
+   "positivos": 167960,
+   "iou_unet": 0.8587907361270933,
+   "iou_lgbm": 0.23154806352416846
+  },
+  {
+   "bloco": "46_1800",
+   "ano": 2022,
+   "px_rotulados": 97414,
+   "positivos": 96204,
+   "iou_unet": 0.9536927391710813,
+   "iou_lgbm": 0.9169461780496163
+  }
+ ],
+ "gerado_em": "2026-11-06T13:58:44+00:00"
+}

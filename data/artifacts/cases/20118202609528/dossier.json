@@ -26,8 +26,8 @@
   "p50": null,
   "p90": null
  },
- "area_disturbio_ha": 7.91,
- "area_disturbio_fora_ha": 252.61,
+ "area_disturbio_ha": 0.0,
+ "area_disturbio_fora_ha": 63.35,
  "n_arvores_declaradas": null,
  "flags": [
   {
@@ -35,13 +35,13 @@
    "titulo": "Corte raso fora do polígono autorizado",
    "status": "indicio",
    "severidade": "alta",
-   "confianca": 0.74
+   "confianca": 0.76
   },
   {
    "codigo": "F2",
    "titulo": "Área desmatada acima da autorizada",
-   "status": "indicio",
-   "severidade": "alta",
+   "status": "sem_indicio",
+   "severidade": "info",
    "confianca": 0.8
   },
   {
@@ -54,9 +54,9 @@
   {
    "codigo": "E",
    "titulo": "Desmatamento fora da validade",
-   "status": "inconclusivo",
-   "severidade": "baixa",
-   "confianca": 0.5
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.6
   },
   {
    "codigo": "F6",
@@ -66,10 +66,10 @@
    "confianca": 0.0
   }
  ],
- "score": 0.7678,
+ "score": 0.5323,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T08:02:36+00:00",
+ "processado_em": "2026-11-06T14:50:15+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -77,13 +77,13 @@
    "titulo": "Corte raso fora do polígono autorizado",
    "status": "indicio",
    "severidade": "alta",
-   "confianca": 0.74,
+   "confianca": 0.76,
    "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização e adjacente (borda a ≤ 500 m da UPA; indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
    "evidencias": [
     {
      "tipo": "geometria",
-     "descricao": "252,6 ha de distúrbio em 127 polígono(s) fora da UPA, até 507 m do limite",
-     "valor": 252.61,
+     "descricao": "63,4 ha de distúrbio em 29 polígono(s) fora da UPA, até 506 m do limite",
+     "valor": 63.35,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": {
@@ -93,8 +93,8 @@
     },
     {
      "tipo": "documento",
-     "descricao": "3 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente DESMATAMENTO_CR de 2026-07-10",
-     "valor": 3.0,
+     "descricao": "2 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente DESMATAMENTO_CR de 2026-07-10",
+     "valor": 2.0,
      "unidade": "alertas",
      "camada": "deter",
      "filtro": null,
@@ -102,20 +102,20 @@
     }
    ],
    "volume_m3": null,
-   "area_ha": 252.61
+   "area_ha": 63.35
   },
   {
    "codigo": "F2",
    "titulo": "Área desmatada acima da autorizada",
-   "status": "indicio",
-   "severidade": "alta",
+   "status": "sem_indicio",
+   "severidade": "info",
    "confianca": 0.8,
    "regra": "Σ área desmatada (dentro + polígonos contíguos, até 500 m do limite) > área autorizada × 1.05; > 3× a autorizada ou > 30% do buffer -> inconclusivo (sanidade)",
    "evidencias": [
     {
      "tipo": "metrica",
-     "descricao": "188,1 ha desmatados para 112,9 ha autorizados",
-     "valor": 188.11,
+     "descricao": "46,7 ha desmatados para 112,9 ha autorizados",
+     "valor": 46.74,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": null,
@@ -123,7 +123,7 @@
     }
    ],
    "volume_m3": null,
-   "area_ha": 188.11
+   "area_ha": 46.74
   },
   {
    "codigo": "D",
@@ -149,14 +149,14 @@
   {
    "codigo": "E",
    "titulo": "Desmatamento fora da validade",
-   "status": "inconclusivo",
-   "severidade": "baixa",
-   "confianca": 0.5,
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.6,
    "regra": "Intervalo da mudança (fim da janela pré → fim da janela pós) comparado à validade; intervalo cruzando a fronteira da validade = inconclusivo",
    "evidencias": [
     {
      "tipo": "texto",
-     "descricao": "Mudança observada entre 2025-10-05 e 2026-10-05; validade 2026-06-11 a 2027-06-11; área com distúrbio dentro do polígono 7,9 ha",
+     "descricao": "Mudança observada entre 2025-10-05 e 2026-10-05; validade 2026-06-11 a 2027-06-11; área com distúrbio dentro do polígono 0,0 ha",
      "valor": null,
      "unidade": null,
      "camada": null,
@@ -241,7 +241,7 @@
   {
    "id": "prob",
    "sensor": "Modelo",
-   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM)",
+   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM confirmado pela U-Net)",
    "data": "2025-10-05/2026-10-05",
    "png": "img/prob.png",
    "bounds": [
@@ -253,38 +253,6 @@
    "resolucao_m": 10.0,
    "nuvem_pct": null,
    "par": null
-  },
-  {
-   "id": "cbers_pre",
-   "sensor": "CBERS-4A WPM",
-   "rotulo": "CBERS-4A WPM 2 m · 2025-05-25",
-   "data": "2025-05-25",
-   "png": "img/cbers_pre.png",
-   "bounds": [
-    -63.80354912714945,
-    -8.808760975863622,
-    -63.712411144498,
-    -8.58510948469442
-   ],
-   "resolucao_m": 2.0,
-   "nuvem_pct": 2.8,
-   "par": "pre"
-  },
-  {
-   "id": "cbers_pos",
-   "sensor": "CBERS-4A WPM",
-   "rotulo": "CBERS-4A WPM 2 m · 2026-08-07",
-   "data": "2026-08-07",
-   "png": "img/cbers_pos.png",
-   "bounds": [
-    -63.80354912714945,
-    -8.808760975863622,
-    -63.712411144498,
-    -8.58510948469442
-   ],
-   "resolucao_m": 2.0,
-   "nuvem_pct": 0.0,
-   "par": "pos"
   }
  ],
  "camadas": [
@@ -299,7 +267,7 @@
   {
    "nome": "Área desmatada",
    "distribuicao": "fixa",
-   "valor": 188.10870480923978,
+   "valor": 46.73795021256493,
    "unidade": "ha",
    "origem": "detector LightGBM sobre Sentinel-2"
   },
@@ -368,7 +336,7 @@
   }
  ],
  "modelo": {
-  "detector": "lightgbm-v1 (limiar 0.37)",
+  "detector": "lightgbm-and-unet (limiar 0.37); volume: lightgbm (limiar 0.37)",
   "calibracao": "lgbm-quantil-v1+cqr",
   "score": "1 − exp(−Σ peso × severidade × confiança)",
   "s2_meta": {
@@ -408,7 +376,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T07:56:07+00:00",
+   "consultado_em": "2026-11-06T14:47:57+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },
@@ -427,14 +395,6 @@
    "consultado_em": "2026-11-06T03:24:38.952526+00:00",
    "versao": null,
    "licenca": "CC-BY-SA"
-  },
-  {
-   "id": "cbers",
-   "fonte": "INPE BDC - CBERS-4A WPM 2 m (CB4A-WPM-PCA-FUSED-1)",
-   "url": "https://data.inpe.br/bdc/stac/v1/collections/CB4A-WPM-PCA-FUSED-1",
-   "consultado_em": "2026-11-06T07:56:07+00:00",
-   "versao": null,
-   "licenca": "CC-BY-SA"
   }
  ],
  "limitacoes": [
@@ -442,17 +402,13 @@
   "A estação seca posterior ao período de interesse (2027) ainda não está disponível; usada a mais recente (2026).",
   "Máscara de floresta: só conta distúrbio em pixel com NDVI pré ≥ 0.7 e fora de PRODES até 2025; 41% da AOI observável era floresta no pré.",
   "Estoque por hectare indisponível (sem volume autorizado na AUTEX e GEDI não integrado): volume de corte raso não estimado (D = não avaliado).",
+  "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
   "Janelas Sentinel-2: pré 2025-06-01 a 2025-10-05; pós 2026-06-01 a 2026-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 75 e 75.",
   "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
-  "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
+  "Detecção espacial por LightGBM confirmado pela U-Net (deep learning) e volume calibrado sobre o LightGBM, ambos treinados com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
   "Camadas de UC/TI/embargo não integradas: F6 não avaliado."
  ],
  "linha_do_tempo": [
-  {
-   "data": "2025-05-25",
-   "evento": "Imagem CBERS-4A WPM (pre)",
-   "fonte": "cbers"
-  },
   {
    "data": "2025-06-01",
    "evento": "Início da janela Sentinel-2 pré (2025-06-01 a 2025-10-05)",
@@ -472,11 +428,6 @@
    "data": "2026-07-10",
    "evento": "4 alerta(s) DETER no entorno de 2 km desde 2024-08-24; mais recente nesta data (proximidade não implica vínculo)",
    "fonte": "deter"
-  },
-  {
-   "data": "2026-08-07",
-   "evento": "Imagem CBERS-4A WPM (pos)",
-   "fonte": "cbers"
   },
   {
    "data": "2027-06-11",

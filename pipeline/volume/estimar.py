@@ -54,10 +54,8 @@ def patch_s2_utm():
 
 
 def limiar_detector() -> float:
-    try:
-        return float(json.loads((ML_DIR / "threshold.json").read_text())["threshold"])
-    except Exception:
-        return 0.5
+    from pipeline.detect.selecao import limiar
+    return limiar()
 
 
 # ---------------------------------------------------------------- máscara de floresta

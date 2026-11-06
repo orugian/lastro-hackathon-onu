@@ -25,6 +25,11 @@ Pré-requisitos: Python 3.11 com [uv](https://docs.astral.sh/uv/), Node 24 e, pa
 ```powershell
 uv run python -m pipeline.ingest.run_all          # PAMGIA, IF100, POA/AUTEX, DETER/PRODES, regras C/D/E, pré-triagem
 uv run python -m pipeline.detect.train            # detector LightGBM (GroupKFold espacial) -> metrics/detector.json
+# U-Net (deep learning): treinar no Colab (colab/lastro_dl.ipynb), salvar lastro_best.pt em data/processed/dl/lastro_unet.pt
+uv run --with torch --with segmentation-models-pytorch==0.5.0 --with onnx --with onnxruntime python scripts/export_unet_onnx.py
+uv run python -m pipeline.detect.avaliar_dl       # validação independente em blocos nunca vistos pela U-Net
+uv run python -m pipeline.detect.calibrar_dl      # escolhe a regra operacional (metade A) e mede na metade B
+uv run python scripts/integrar_unet.py            # registra métricas e regra em detector.json / dl.json
 uv run python -m pipeline.volume.calibrar --baixar --n 72   # baixa S2 das UPAs de calibração
 uv run python -m pipeline.volume.calibrar         # quantis + conformal -> metrics/calibracao.json, montecarlo.json
 uv run python -m pipeline.export.run --top 80     # dossiês com imagem + todas as autorizações documentais -> index.json
@@ -42,10 +47,10 @@ Os dados brutos ficam em `data/raw/` (`scripts/download_bg.ps1`). Todas as etapa
 | Árvores com coordenada incoerente (> 5 km do polígono) | **810**, tratadas como qualidade cadastral, não como indício | IF100 + PAMGIA |
 | Razão explorado/autorizado (IF100, agregada por autorização) | mediana **0,98**, p95 **1,05** | IF100 |
 | Detector LightGBM vs baseline Otsu (fora da amostra, 65.500 px) | IoU **0,561** vs 0,283 · F1 **0,719** vs 0,442 | `data/artifacts/metrics/detector.json` |
-| Deep learning (Colab, experimental, mesmos 1,98 mi px, blocos de 25 km) | U-Net siamesa IoU **0,742** × LightGBM 0,705 × Otsu 0,432. Ainda não integrada; o operacional segue LightGBM | `data/artifacts/metrics/dl.json` |
+| Deep learning: U-Net siamesa (treinada no Colab, exportada para ONNX, roda em CPU) | Colab, blocos de 25 km: IoU **0,742** × LightGBM 0,705. Validação local em blocos nunca vistos: IoU 0,720 × 0,451, porém falso alarme 37,7%. **Em uso como confirmação (regra AND LightGBM + U-Net): falso alarme 9,2% × 16,1%, precisão 0,88** | `data/artifacts/metrics/detector.json`, `dl.json` |
 | Calibração imagem → volume (72 UPAs, 17.193 células, GroupKFold por UPA) | cobertura empírica p10–p90 de **84,2%** por célula (78,8% antes do conformal) e **88,9%** por UPA, contra 80% nominais | `data/artifacts/metrics/calibracao.json` |
-| Triagem exportada | 1.142 autorizações reais + 1 cenário SIMULAÇÃO; **38** com análise de imagem; **61** com ao menos um indício (A 1 · B 34 · C 11 · D 10 · E 29 · F2 2) | `data/artifacts/index.json` |
-| Comunicações ao IBAMA (prioridade ≥ 70) | **14** protocolos gerados automaticamente (13 reais + 1 simulado) | `/api/comunicacoes` |
+| Triagem exportada | 1.142 autorizações reais + 1 cenário SIMULAÇÃO; **39** com análise de imagem; **61** com ao menos um indício (A 1 · B 34 · C 11 · D 10 · E 29 · F2 1) | `data/artifacts/index.json` |
+| Comunicações ao IBAMA (prioridade ≥ 70) | **12** protocolos gerados automaticamente (11 reais + 1 simulado) | `/api/comunicacoes` |
 
 ## Comunicação automática ao IBAMA (regra de limiar)
 

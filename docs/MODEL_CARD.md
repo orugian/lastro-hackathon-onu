@@ -71,7 +71,26 @@ Fontes: `data/artifacts/metrics/dl.json` (métricas e config) e as entradas `[Co
 
 **Comparabilidade.** Esses números **não são comparáveis** com a tabela do detector operacional (blocos de 5 km, 5 folds, 65.500 px). A comparação justa é sempre dentro de cada protocolo.
 
-**Status.** O Prithvi-EO-2.0 foi tentado e caiu no fallback por incompatibilidade de versão TerraTorch/TorchGeo no Colab. Os pesos da U-Net não foram exportados, então o **modelo operacional continua sendo o LightGBM local**. Próximo passo: exportar os pesos e usar a U-Net no pipeline, revalidando no protocolo local.
+**Status.** O Prithvi-EO-2.0 foi tentado e caiu no fallback por incompatibilidade de versão TerraTorch/TorchGeo no Colab. A U-Net foi treinada, exportada para ONNX (`data/processed/dl/lastro_unet.onnx`, 95 MB, roda em CPU com ONNX Runtime em cerca de 5 s por autorização) e **integrada ao pipeline** após a validação independente abaixo.
+
+### Validação independente da U-Net e regra operacional (protocolo local)
+`pipeline/detect/avaliar_dl.py` e `pipeline/detect/calibrar_dl.py`: 21 blocos de 5 km do dataset do detector que **a U-Net nunca viu** (excluídos os 15 blocos com chips de treino ou validação do Colab), avaliados **parede a parede** (todos os pixels rotulados do bloco). O LightGBM de cada bloco é o modelo do fold em que aquele bloco foi teste. Os blocos foram divididos ao acaso: a regra foi escolhida na metade A e **medida na metade B (10 blocos, 1,54 mi px)**.
+
+| Metade B (mesmos pixels) | IoU | Precisão | Recall | Falso alarme* |
+|---|---|---|---|---|
+| ΔNDVI + Otsu | 0,198 | 0,981 | 0,198 | 0,5% |
+| LightGBM (detector anterior) | 0,451 | 0,814 | 0,503 | 16,1% |
+| U-Net siamesa | 0,720 | 0,772 | 0,914 | 37,7% |
+| Média (U-Net + LightGBM)/2 ≥ 0,55 | 0,723 | 0,844 | 0,834 | 21,5% |
+| **LightGBM + U-Net (AND) · em uso** | 0,455 | **0,881** | 0,485 | **9,2%** |
+
+\*Falso alarme = fração da floresta estável de referência marcada como distúrbio.
+
+**Decisão.** Sozinha, a U-Net acerta muito mais área (IoU 0,720 × 0,451) e venceu o LightGBM em 19 dos 21 blocos. Porém marca floresta intacta demais: nas 72 UPAs limpas da calibração, gerou manchas de cerca de 2 km em dossel sem alteração visível. É uma mudança de domínio, porque o treino usou ≥ 50% de chips positivos. Como casos acima do limiar geram **comunicação ao IBAMA**, a operação prioriza precisão. Adotamos a regra **AND**: o pixel só é distúrbio se o LightGBM e a U-Net concordam. Ela corta o falso alarme de 16,1% para 9,2% (−43%) com IoU equivalente. A média U-Net/LightGBM é a alternativa de maior recall, documentada para uso futuro após mais treino.
+
+**Onde cada modelo é usado.** Detecção espacial (polígonos de distúrbio, áreas dentro/fora, indícios B e F2, camada "prob" no mapa): regra AND. Conversão imagem → volume (indício A, p10/p50/p90): LightGBM, porque recalibrar o volume sobre a U-Net piorou a calibração (R² por UPA 0,21 × 0,33; disparo de A em UPAs limpas 9,7% × 6,9%). O detector é configurável por `LASTRO_DETECTOR=unet|lightgbm`.
+
+**Efeito nos dossiês.** Nos 39 casos com imagem, a área de distúrbio fora da UPA caiu em média cerca de 30% (ex.: 20112202459084: 14,2 → 4,5 ha; 20132202386081: 33,7 → 3,6 ha). Os indícios dos casos de topo se mantiveram, e 11 casos ficaram acima do limiar de comunicação (antes, 13 reais).
 
 ![Exemplo de teste espacial da U-Net siamesa: pré, pós, rótulo INPE (vazio = ignorado) e probabilidade](img/dl_exemplo_1.png)
 

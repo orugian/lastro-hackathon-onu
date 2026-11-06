@@ -54,7 +54,7 @@ def _aoi(geom):
 def baixar_um(row) -> dict:
     from pipeline.imagery.s2 import baixar_par_s2
     from pipeline.volume.janelas import janelas_sazonais
-    from pipeline.detect.predict import prever
+    from pipeline.detect.selecao import prever
     from pipeline.volume.estimar import patch_s2_utm
     patch_s2_utm()
     autex = row["autex"]
@@ -62,8 +62,11 @@ def baixar_um(row) -> dict:
     t0 = time.monotonic()
     pre, pos, _ = janelas_sazonais("POA", row["data_expl_min"], row["data_expl_max"], row["validade_ini"], row["validade_fim"])
     meta = baixar_par_s2(autex, _aoi(row["geometry"]), pre, pos, dest)
-    if not (dest / "prob.tif").exists():
+    from pipeline.detect.selecao import metodo
+    marca = dest / "detector.txt"
+    if not (dest / "prob.tif").exists() or not marca.exists() or marca.read_text() != metodo():
         prever(dest / "s2_stack.tif", dest)
+        marca.write_text(metodo())
     return {"autex": autex, "s": round(time.monotonic() - t0, 1), "nuvem_pos": meta.get("nuvem_pct_pos")}
 
 

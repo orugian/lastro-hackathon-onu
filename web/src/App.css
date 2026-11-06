@@ -2196,3 +2196,7 @@
 .dh-actions { display: flex; flex-direction: column; gap: 8px; }
 .button.ibama { background: var(--danger); color: #fff; border-color: var(--danger); }
 .button.ibama:hover { filter: brightness(1.1); }
+
+/* destaque do detector dentro do card estreito: empilha número e texto */
+.rel-card:not(.dl-card) .dl-highlight { grid-template-columns: 1fr; gap: 12px; margin: 10px 0 14px; }
+

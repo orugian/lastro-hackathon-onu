@@ -124,5 +124,161 @@
     "val": 0.45889996186546655
    }
   ]
+ },
+ "avaliacao_local": {
+  "protocolo": "Protocolo local: blocos de 5 km (EPSG:31980) do dataset do detector, excluídos os blocos com chips de treino/validação da U-Net; LightGBM = modelo do fold em que o bloco foi teste (GroupKFold k=5 idêntico ao train.py); mesmos pixels para os 3 métodos.",
+  "n_blocos": 21,
+  "blocos_excluidos_vistos": 11,
+  "blocos_unet_vence": 19,
+  "resultados": {
+   "parede_a_parede": {
+    "unet": {
+     "iou": 0.7287169672093345,
+     "f1": 0.843072615161175,
+     "precisao": 0.7883061971318028,
+     "recall": 0.9060168052193199,
+     "matriz_confusao": [
+      [
+       938274,
+       424318
+      ],
+      [
+       163905,
+       1580077
+      ]
+     ],
+     "n_pixels_teste": 3106574
+    },
+    "lightgbm": {
+     "iou": 0.4519285742639898,
+     "f1": 0.6225217717656407,
+     "precisao": 0.8174487945206756,
+     "recall": 0.5026588577175681,
+     "matriz_confusao": [
+      [
+       1166825,
+       195767
+      ],
+      [
+       867354,
+       876628
+      ]
+     ],
+     "n_pixels_teste": 3106574
+    },
+    "baseline": {
+     "iou": 0.17808803373387366,
+     "f1": 0.30233399989546655,
+     "precisao": 0.9690328905324159,
+     "recall": 0.17910735317222312,
+     "matriz_confusao": [
+      [
+       1352610,
+       9982
+      ],
+      [
+       1431622,
+       312360
+      ]
+     ],
+     "n_pixels_teste": 3106574
+    }
+   },
+   "amostra_balanceada": {
+    "unet": {
+     "iou": 0.6601156069364161,
+     "f1": 0.7952646239554317,
+     "precisao": 0.7125167978498752,
+     "recall": 0.8997575757575758,
+     "matriz_confusao": [
+      [
+       15010,
+       5990
+      ],
+      [
+       1654,
+       14846
+      ]
+     ],
+     "n_pixels_teste": 37500
+    },
+    "lightgbm": {
+     "iou": 0.5541336063475812,
+     "f1": 0.7131093544137023,
+     "precisao": 0.7810245310245311,
+     "recall": 0.656060606060606,
+     "matriz_confusao": [
+      [
+       17965,
+       3035
+      ],
+      [
+       5675,
+       10825
+      ]
+     ],
+     "n_pixels_teste": 37500
+    },
+    "baseline": {
+     "iou": 0.3032261926138744,
+     "f1": 0.46534698939052954,
+     "precisao": 0.9607434098236298,
+     "recall": 0.30703030303030304,
+     "matriz_confusao": [
+      [
+       20793,
+       207
+      ],
+      [
+       11434,
+       5066
+      ]
+     ],
+     "n_pixels_teste": 37500
+    }
+   }
+  }
+ },
+ "status": "em uso: confirma a detecção do LightGBM (regra AND), ONNX Runtime em CPU",
+ "regra_operacional": {
+  "regra": "LightGBM ≥ limiar E U-Net ≥ 0,5",
+  "blocos_B": 11,
+  "teste_B": {
+   "lightgbm": {
+    "iou": 0.4513951462352209,
+    "f1": 0.622015510257281,
+    "precisao": 0.814243560063865,
+    "recall": 0.5032155090316178,
+    "falso_alarme": 0.16072333191406044
+   },
+   "unet@0.5": {
+    "iou": 0.7200765854767358,
+    "f1": 0.8372610749505199,
+    "precisao": 0.7722726045276566,
+    "recall": 0.9141924155276787,
+    "falso_alarme": 0.3774136703951069
+   },
+   "media@0.55": {
+    "iou": 0.7228407352898739,
+    "f1": 0.8391265895721388,
+    "precisao": 0.8442380760856621,
+    "recall": 0.8340766261240963,
+    "falso_alarme": 0.21544562579057125
+   },
+   "and@0.5": {
+    "iou": 0.4549509245843719,
+    "f1": 0.625383189078127,
+    "precisao": 0.880804784990038,
+    "recall": 0.48479820100205784,
+    "falso_alarme": 0.09184922970776446
+   },
+   "baseline": {
+    "iou": 0.1977025372931338,
+    "f1": 0.33013629200444244,
+    "precisao": 0.9811076419944799,
+    "recall": 0.19845806518925663,
+    "falso_alarme": 0.005350244436087655
+   }
+  }
  }
 }

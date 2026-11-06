@@ -26,7 +26,7 @@
   "p50": 14978.9,
   "p90": 34032.2
  },
- "area_disturbio_ha": 85.81,
+ "area_disturbio_ha": 85.62,
  "area_disturbio_fora_ha": 11.85,
  "n_arvores_declaradas": 4834,
  "flags": [
@@ -76,7 +76,7 @@
  "score": 0.5323,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T07:57:17+00:00",
+ "processado_em": "2026-11-06T14:49:29+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
@@ -85,11 +85,11 @@
    "status": "sem_indicio",
    "severidade": "info",
    "confianca": 0.66,
-   "regra": "Avaliado em blocos de 3×3 células (9 ha) e no total da UPA, onde a incerteza está calibrada (nunca por árvore ou célula isolada). Indício se (i) o volume declarado na UPA (IF100, células observáveis) supera o p90 do volume compatível com a imagem (Monte Carlo), ou (ii) os blocos com declarado > p90 do bloco somam excesso ≥ 10% do declarado e ≥ 50 m³ (limiar = p95 das UPAs de calibração sem indício).",
+   "regra": "Avaliado em blocos de 3×3 células (9 ha) e no total da UPA, onde a incerteza está calibrada (nunca por árvore ou célula isolada). Indício se (i) o volume declarado na UPA (IF100, células observáveis) supera o p90 do volume compatível com a imagem (Monte Carlo), ou (ii) os blocos com declarado > p90 do bloco somam excesso ≥ 10% do declarado e ≥ 50 m³, ou (iii) concentram ≥ 34% do volume declarado em ≥ 3 blocos (limiares = p95 das UPAs de calibração sem indício).",
    "evidencias": [
     {
      "tipo": "metrica",
-     "descricao": "2 de 143 blocos de 9 ha com volume declarado acima do p90 compatível com a imagem (18 células destacadas)",
+     "descricao": "2 de 143 blocos de 9 ha com volume declarado acima do p90 compatível com a imagem (18 células destacadas), concentrando 3% do volume declarado (limiar 34%)",
      "valor": 2.0,
      "unidade": "blocos",
      "camada": "celulas",
@@ -161,8 +161,8 @@
     },
     {
      "tipo": "texto",
-     "descricao": "Contexto regional (não computado): 31,9 ha de distúrbio em 18 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
-     "valor": 31.92,
+     "descricao": "Contexto regional (não computado): 20,9 ha de distúrbio em 12 polígono(s) a mais de 500 m da UPA, no entorno de 2 km; proximidade não implica vínculo com a autorização",
+     "valor": 20.86,
      "unidade": "ha",
      "camada": null,
      "filtro": null,
@@ -263,7 +263,7 @@
     },
     {
      "tipo": "texto",
-     "descricao": "Imagem: Mudança observada entre 2022-10-05 e 2024-10-05; validade 2022-06-30 a 2024-06-06; área com distúrbio dentro do polígono 85,8 ha (relação com a validade: inconclusivo)",
+     "descricao": "Imagem: Mudança observada entre 2022-10-05 e 2024-10-05; validade 2022-06-30 a 2024-06-06; área com distúrbio dentro do polígono 85,6 ha (relação com a validade: inconclusivo)",
      "valor": null,
      "unidade": null,
      "camada": null,
@@ -348,7 +348,7 @@
   {
    "id": "prob",
    "sensor": "Modelo",
-   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM)",
+   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM confirmado pela U-Net)",
    "data": "2022-10-05/2024-10-05",
    "png": "img/prob.png",
    "bounds": [
@@ -530,7 +530,7 @@
   }
  ],
  "modelo": {
-  "detector": "lightgbm-v1 (limiar 0.37)",
+  "detector": "lightgbm-and-unet (limiar 0.37); volume: lightgbm (limiar 0.37)",
   "calibracao": "lgbm-quantil-v1+cqr",
   "score": "1 − exp(−Σ peso × severidade × confiança)",
   "s2_meta": {
@@ -609,7 +609,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T07:56:07+00:00",
+   "consultado_em": "2026-11-06T14:47:57+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },
@@ -644,7 +644,7 @@
   "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
   "Janelas Sentinel-2: pré 2022-06-01 a 2022-10-05; pós 2024-06-01 a 2024-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 25 e 25.",
   "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
-  "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
+  "Detecção espacial por LightGBM confirmado pela U-Net (deep learning) e volume calibrado sobre o LightGBM, ambos treinados com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
   "Camadas de UC/TI/embargo não integradas: F6 não avaliado.",
   "Calibração imagem→volume: lgbm-quantil-v1+cqr; o indício A é agregado por célula de 1 ha e por UPA, nunca por árvore."
  ],

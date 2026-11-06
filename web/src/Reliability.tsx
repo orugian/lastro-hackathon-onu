@@ -75,7 +75,8 @@ function Matrix({ m }: { m: number[][] }) {
 
 const METRICS = ["iou", "f1", "precisao", "recall"] as const;
 const isColab = (m: MetricaModelo) => /^\[colab\]/i.test(m.nome);
-const shortName = (n: string) => n.replace(/^\[colab\]\s*/i, "");
+const isLocal5 = (m: MetricaModelo) => /^\[local 5 km\]/i.test(m.nome);
+const shortName = (n: string) => n.replace(/^\[(colab|local 5 km)\]\s*/i, "");
 
 function ModelTable({ models, selected, inUse, onSelect }: { models: MetricaModelo[]; selected?: string; inUse?: string; onSelect: (n: string) => void }) {
   const best = (k: (typeof METRICS)[number]) => Math.max(...models.map((m) => m[k] ?? -1));
@@ -142,9 +143,64 @@ function Strata({ strata, name }: { strata: Strat; name?: string }) {
   );
 }
 
+function HeadToHead({ models, inUse }: { models: MetricaModelo[]; inUse: string }) {
+  const [sel, setSel] = useState(inUse);
+  const model = models.find((m) => m.nome === sel) ?? models[0];
+  const emUso = models.find((m) => m.nome === inUse);
+  const unet = models.find((m) => /u-?net siamesa$/i.test(m.nome));
+  const lgbm = models.find((m) => /\] lightgbm$/i.test(m.nome));
+  const { text } = splitObs(model?.obs ?? null);
+  const f3 = (v: number | null) => (v == null ? "—" : v.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 }));
+  const fa = (m?: MetricaModelo) => (m?.matriz_confusao ? m.matriz_confusao[0][1] / Math.max(1, m.matriz_confusao[0][0] + m.matriz_confusao[0][1]) : null);
+  if (!models.length) return null;
+  return (
+    <>
+      <div className="group-title">
+        <h3>Validação independente · blocos de 5 km nunca vistos pela U-Net</h3>
+        <span>decide o detector em uso</span>
+      </div>
+      {emUso && lgbm && unet && fa(emUso) != null && fa(lgbm) != null && (
+        <div className="dl-highlight">
+          <div className="dl-vs">
+            <div>
+              <b>{pct(fa(emUso), 1)}</b>
+              <span>falso alarme · LightGBM + U-Net</span>
+            </div>
+            <i aria-hidden="true">vs</i>
+            <div className="dim">
+              <b>{pct(fa(lgbm), 1)}</b>
+              <span>falso alarme · LightGBM sozinho</span>
+            </div>
+          </div>
+          <p>
+            A U-Net (deep learning) entra como <b>segunda opinião</b>: só conta como distúrbio o pixel que o LightGBM e a U-Net marcam juntos. Em{" "}
+            {fmt(emUso.n_pixels_teste, 0)} pixels de blocos que nenhum dos dois viu, isso corta o falso alarme de {pct(fa(lgbm), 1)} para {pct(fa(emUso), 1)},
+            com precisão {pct(emUso.precisao)} e IoU equivalente ({f3(emUso.iou)} × {f3(lgbm.iou)}). Sozinha, a U-Net acerta mais área (IoU {f3(unet.iou)}), mas
+            marca floresta intacta demais ({pct(fa(unet), 1)}); como casos acima do limiar geram comunicação ao IBAMA, a operação prioriza precisão.
+          </p>
+        </div>
+      )}
+      <ModelTable models={models} selected={model?.nome} inUse={inUse} onSelect={setSel} />
+      {model?.matriz_confusao && (
+        <>
+          <h3>Matriz de confusão · {shortName(model.nome)}</h3>
+          <Matrix m={model.matriz_confusao} />
+        </>
+      )}
+      {text && (
+        <div className="obs">
+          <Icon name="info" size={15} />
+          <p>{text}</p>
+        </div>
+      )}
+    </>
+  );
+}
+
 function Detector({ d }: { d: MetricsDetector }) {
-  const local = d.modelos.filter((m) => !isColab(m));
-  const [sel, setSel] = useState(d.selecionado);
+  const local = d.modelos.filter((m) => !isColab(m) && !isLocal5(m));
+  const local5 = d.modelos.filter(isLocal5);
+  const [sel, setSel] = useState(local.find((m) => /lightgbm/i.test(m.nome))?.nome ?? local[0]?.nome);
   const model = local.find((m) => m.nome === sel) ?? local[0];
   const { text, strata } = splitObs(model?.obs ?? null);
   const [protoLocal] = d.protocolo.split(" | ");
@@ -154,9 +210,10 @@ function Detector({ d }: { d: MetricsDetector }) {
         <h2>Detector de distúrbio florestal</h2>
         <p>Classifica cada pixel Sentinel-2 entre floresta estável e distúrbio (corte raso, corte seletivo, degradação) entre as datas antes e depois.</p>
       </header>
+      <HeadToHead models={local5} inUse={d.selecionado} />
       <div className="group-title">
-        <h3>Protocolo local (operacional)</h3>
-        <span>modelo que gera os dossiês</span>
+        <h3>Treino local · GroupKFold espacial (5 km)</h3>
+        <span>LightGBM × baseline; alimenta a calibração de volume</span>
       </div>
       <div className="protocol">
         <span>Protocolo</span>
@@ -165,7 +222,7 @@ function Detector({ d }: { d: MetricsDetector }) {
         <p>{d.rotulos}</p>
       </div>
       {local.length ? (
-        <ModelTable models={local} selected={model?.nome} inUse={d.selecionado} onSelect={setSel} />
+        <ModelTable models={local} selected={model?.nome} inUse="lightgbm" onSelect={setSel} />
       ) : (
         <p className="muted">Nenhum modelo avaliado neste protocolo.</p>
       )}
@@ -273,10 +330,10 @@ function DeepLearning({ d }: { d: MetricsDetector }) {
     <section className="rel-card dl-card">
       <header className="dl-head">
         <div>
-          <h2>Experimento deep learning (Colab, GPU)</h2>
+          <h2>Treino deep learning (Colab, GPU)</h2>
           <p>Segundo protocolo, independente: U-Net siamesa comparada ao LightGBM e a um baseline sem treino nos mesmos pixels de teste espacial (blocos de 25 km).</p>
         </div>
-        <span className="exp-tag">experimental · não usado nos dossiês</span>
+        <span className="exp-tag">treino da U-Net · em uso como confirmação</span>
       </header>
       {unet && lgbm && unet.iou != null && lgbm.iou != null && (
         <div className="dl-highlight">
@@ -293,7 +350,7 @@ function DeepLearning({ d }: { d: MetricsDetector }) {
           </div>
           <p>
             Nos <b>mesmos {fmt(unet.n_pixels_teste, 0)} pixels</b> de teste, a U-Net supera o LightGBM em IoU por {fmt((unet.iou - lgbm.iou) * 100)} pontos percentuais
-            {unet.recall != null && lgbm.recall != null && <> e encontra mais distúrbio (recall {pct(unet.recall)} contra {pct(lgbm.recall)})</>}. O detector operacional segue sendo o LightGBM, mais barato e reprodutível sem GPU.
+            {unet.recall != null && lgbm.recall != null && <> e encontra mais distúrbio (recall {pct(unet.recall)} contra {pct(lgbm.recall)})</>}. Os pesos foram exportados para ONNX e rodam localmente na CPU (≈ 5 s por autorização), confirmando a detecção do LightGBM.
           </p>
         </div>
       )}

@@ -1,5 +1,5 @@
 {
-  "protocolo": "GroupKFold espacial externo k=5, blocos fixos 5 km EPSG:31980; 36 blocos, 65500 pixels. Limiar LightGBM escolhido por F1 em holdout interno por bloco (25%), sem usar teste externo. Reajuste em todo treino externo. Baseline Otsu nao supervisionado por tile completo e abertura 3x3 antes de amostrar. Metricas agregadas out-of-fold. Modelo final ajustado em todos os blocos. Tempo treino e avaliacao 13.49 s. | Entradas [Colab]: segundo protocolo independente (blocos de 25 km), usado para comparar deep learning com LightGBM e baseline nos mesmos pixels.",
+  "protocolo": "GroupKFold espacial externo k=5, blocos fixos 5 km EPSG:31980; 36 blocos, 65500 pixels. Limiar LightGBM escolhido por F1 em holdout interno por bloco (25%), sem usar teste externo. Reajuste em todo treino externo. Baseline Otsu nao supervisionado por tile completo e abertura 3x3 antes de amostrar. Metricas agregadas out-of-fold. Modelo final ajustado em todos os blocos. Tempo treino e avaliacao 13.49 s. | [Local 5 km]: blocos nunca vistos pela U-Net; regra escolhida na metade A e medida na metade B (pipeline/detect/avaliar_dl.py, calibrar_dl.py). | [Colab]: segundo protocolo independente (blocos de 25 km). | Operacional: LightGBM confirmado pela U-Net siamesa (AND) na detecção espacial; LightGBM como insumo da calibração de volume.",
   "rotulos": "INPE PRODES anual e DETER: corte raso, CS_DESORDENADO, CS_GEOMETRICO, DEGRADACAO; 2022-2024; AMACRO",
   "modelos": [
     {
@@ -39,6 +39,101 @@
       ],
       "n_pixels_teste": 65500,
       "obs": "Rotulos fracos: DETER (~3 ha) e PRODES (6,25 ha) nao captam todas as pequenas clareiras. Datas anuais podem incluir eventos posteriores a mediana jun-set; negativos usam NDVI pre >0,75 e exclusao de todos os alertas DETER e PRODES 2008+. Pixels balanceados nao representam prevalencia operacional. Blocos adjacentes nao tem buffer de separacao. Probabilidade nao calibrada; resultado e indicio para priorizar fiscalizacao, nunca prova. Por tipo (mesmos negativos estaveis em cada estrato): {\"corte_raso\": {\"iou\": 0.5571915768960104, \"f1\": 0.7156365153305986, \"precisao\": 0.5961427082126723, \"recall\": 0.8950434782608696, \"matriz_confusao\": [[29027, 6973], [1207, 10293]], \"n_pixels_teste\": 47500}, \"seletivo_degradacao\": {\"iou\": 0.4072398190045249, \"f1\": 0.5787781350482315, \"precisao\": 0.5932450562911976, \"recall\": 0.565, \"matriz_confusao\": [[29027, 6973], [7830, 10170]], \"n_pixels_teste\": 54000}}; exclusao demo: pretriagem.csv ausente na selecao; sobreposicao com demo nao verificada"
+    },
+    {
+      "iou": 0.4549509245843719,
+      "f1": 0.625383189078127,
+      "precisao": 0.880804784990038,
+      "recall": 0.48479820100205784,
+      "matriz_confusao": [
+        [
+          584415,
+          59107
+        ],
+        [
+          464169,
+          436777
+        ]
+      ],
+      "n_pixels_teste": 1544468,
+      "nome": "[Local 5 km] LightGBM + U-Net (AND)",
+      "obs": "Teste em 11 blocos de 5 km nunca vistos pela U-Net e não usados para escolher a regra (metade B); todos os pixels rotulados, mesmos pixels para todos os métodos; LightGBM = modelo do fold em que o bloco foi teste. Falso alarme = fração da floresta estável marcada como distúrbio. Falso alarme 9.2%. Regra operacional: distúrbio se LightGBM ≥ limiar E U-Net ≥ 0,5. Prioriza precisão porque casos acima do limiar geram comunicação ao IBAMA."
+    },
+    {
+      "iou": 0.7200765854767358,
+      "f1": 0.8372610749505199,
+      "precisao": 0.7722726045276566,
+      "recall": 0.9141924155276787,
+      "matriz_confusao": [
+        [
+          400648,
+          242874
+        ],
+        [
+          77308,
+          823638
+        ]
+      ],
+      "n_pixels_teste": 1544468,
+      "nome": "[Local 5 km] U-Net siamesa",
+      "obs": "Teste em 11 blocos de 5 km nunca vistos pela U-Net e não usados para escolher a regra (metade B); todos os pixels rotulados, mesmos pixels para todos os métodos; LightGBM = modelo do fold em que o bloco foi teste. Falso alarme = fração da floresta estável marcada como distúrbio. Falso alarme 37.7%. Deep learning sozinho: maior IoU, mas falso alarme alto e manchas em dossel intacto de florestas manejadas sem alerta. Nos 21 blocos completos venceu o LightGBM em IoU em 19."
+    },
+    {
+      "iou": 0.7228407352898739,
+      "f1": 0.8391265895721388,
+      "precisao": 0.8442380760856621,
+      "recall": 0.8340766261240963,
+      "matriz_confusao": [
+        [
+          504878,
+          138644
+        ],
+        [
+          149488,
+          751458
+        ]
+      ],
+      "n_pixels_teste": 1544468,
+      "nome": "[Local 5 km] Média U-Net/LightGBM ≥ 0,55",
+      "obs": "Teste em 11 blocos de 5 km nunca vistos pela U-Net e não usados para escolher a regra (metade B); todos os pixels rotulados, mesmos pixels para todos os métodos; LightGBM = modelo do fold em que o bloco foi teste. Falso alarme = fração da floresta estável marcada como distúrbio. Falso alarme 21.5%. Alternativa de maior recall; limiar escolhido na metade A. Não adotada pelo falso alarme."
+    },
+    {
+      "iou": 0.4513951462352209,
+      "f1": 0.622015510257281,
+      "precisao": 0.814243560063865,
+      "recall": 0.5032155090316178,
+      "matriz_confusao": [
+        [
+          540093,
+          103429
+        ],
+        [
+          447576,
+          453370
+        ]
+      ],
+      "n_pixels_teste": 1544468,
+      "nome": "[Local 5 km] LightGBM",
+      "obs": "Teste em 11 blocos de 5 km nunca vistos pela U-Net e não usados para escolher a regra (metade B); todos os pixels rotulados, mesmos pixels para todos os métodos; LightGBM = modelo do fold em que o bloco foi teste. Falso alarme = fração da floresta estável marcada como distúrbio. Falso alarme 16.1%. Detector anterior (mesmo modelo/limiar do GroupKFold local)."
+    },
+    {
+      "iou": 0.1977025372931338,
+      "f1": 0.33013629200444244,
+      "precisao": 0.9811076419944799,
+      "recall": 0.19845806518925663,
+      "matriz_confusao": [
+        [
+          640079,
+          3443
+        ],
+        [
+          722146,
+          178800
+        ]
+      ],
+      "n_pixels_teste": 1544468,
+      "nome": "[Local 5 km] ΔNDVI + Otsu",
+      "obs": "Teste em 11 blocos de 5 km nunca vistos pela U-Net e não usados para escolher a regra (metade B); todos os pixels rotulados, mesmos pixels para todos os métodos; LightGBM = modelo do fold em que o bloco foi teste. Falso alarme = fração da floresta estável marcada como distúrbio. Falso alarme 0.5%. Baseline sem treino."
     },
     {
       "iou": 0.7419805207579473,
@@ -98,6 +193,6 @@
       "obs": "Teste espacial do Colab: blocos de 25 km (70/15/15). 1.977.980 px. 400 chips 224x224. GPU Tesla T4. Comparável apenas às outras entradas [Colab] (mesmos pixels). não às métricas locais de 5 folds/5 km. Baseline sem treino nos mesmos chips."
     }
   ],
-  "selecionado": "lightgbm",
+  "selecionado": "[Local 5 km] LightGBM + U-Net (AND)",
   "gerado_em": "2026-11-06T03:15:32.818118+00:00"
 }

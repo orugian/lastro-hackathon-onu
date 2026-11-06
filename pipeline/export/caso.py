@@ -17,6 +17,7 @@ from shapely.geometry import mapping
 from contracts.models import Dossier, Evidencia, Imagem
 from pipeline.export.dados import ART, IMG, POLO, agora, dados, nn
 from pipeline.ingest.common import utm
+from pipeline.detect import selecao as _det
 from pipeline.rules import flags as F
 from pipeline.rules.score import parametros_score, score
 
@@ -150,7 +151,7 @@ def poligonos_mudanca(g, upa_u, outras_u, crs, pre, pos):
     m = gpd.GeoDataFrame(rows, geometry="geometry", crs=crs) if rows else gpd.GeoDataFrame(
         {"area_ha": [], "prob": [], "dentro_upa": [], "dist_limite_m": [], "dist_min_m": [], "coberto_outra": []}, geometry=[], crs=crs)
     m["id"] = [str(i + 1) for i in range(len(m))]
-    m["data_inicio"], m["data_fim"], m["metodo"] = pre[1], pos[1], "lightgbm"
+    m["data_inicio"], m["data_fim"], m["metodo"] = pre[1], pos[1], _det.metodo_espacial()
     m["area_ha"] = m["area_ha"].round(3)
     m["prob"] = m["prob"].round(3)
     return m
@@ -227,17 +228,26 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
         meta = baixar_par_s2(autex, aoi_4326, pre, pos, idir)
     pos = tuple(meta["pos"])
     stack = idir / "s2_stack.tif"
-    p("Detectando distúrbio (LightGBM)", 0.45)
-    if not (idir / "prob.tif").exists() or (idir / "prob.tif").stat().st_mtime < stack.stat().st_mtime:
-        prever(stack, idir)
+    p(f"Detectando distúrbio ({_det.rotulo()})", 0.45)
+    marca = idir / "detector.txt"
+    if (not (idir / "prob.tif").exists() or (idir / "prob.tif").stat().st_mtime < stack.stat().st_mtime
+            or not marca.exists() or marca.read_text() != "lightgbm"):
+        prever(stack, idir)  # LightGBM: alimenta a calibração de volume
+        marca.write_text("lightgbm")
+    esp = _det.prever_espacial(stack, idir)  # U-Net: detecção espacial (polígonos, áreas, B/F2)
     deter_aoi = D.deter[D.deter.intersects(aoi_4326)].copy()
     prodes_aoi = D.prodes[D.prodes.intersects(aoi_4326)].copy()
     # máscara de floresta no pré: NDVI pré ≥ 0,7 e fora de PRODES até o ano da janela pré
     flo = prob_floresta(stack, idir / "prob.tif", idir / "prob_floresta.tif", prodes_aoi, int(pre[0][:4]))
     probf = idir / "prob_floresta.tif"
+    if Path(esp["prob_tif"]).name != "prob.tif":
+        prob_floresta(stack, esp["prob_tif"], idir / "prob_dl_floresta.tif", prodes_aoi, int(pre[0][:4]))
+        probf_esp = idir / "prob_dl_floresta.tif"
+    else:
+        probf_esp = probf
 
     # 2. mudança
-    mud = poligonos_mudanca(vetorizar_mudanca(probf, limiar_detector()), upa_u, outras_u, crs, pre, pos)
+    mud = poligonos_mudanca(vetorizar_mudanca(probf_esp, _det.limiar_espacial()), upa_u, outras_u, crs, pre, pos)
     area_dentro = float(mud.loc[mud.dentro_upa.astype(bool), "area_ha"].sum()) if len(mud) else 0.0
     fora_ok = mud[(~mud.dentro_upa.astype(bool)) & (mud.dist_limite_m > F.TOL_BORDA_M) & (mud.prob >= F.PROB_MIN_B)
                   & (mud.area_ha >= F.AREA_MIN_POLIGONO_HA) & (~mud.coberto_outra.astype(bool)) & (mud.dist_min_m <= F.B_ADJACENCIA_M)] if len(mud) else mud
@@ -349,11 +359,11 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
                bounds=b, resolucao_m=10, nuvem_pct=round(meta.get("nuvem_pct_pos", 0), 1), par="pos"),
         Imagem(id="dndvi", sensor="Derivado", rotulo="Queda de NDVI (pós − pré)", data=f"{pre[1]}/{pos[1]}", png="img/dndvi.png", bounds=b, resolucao_m=10),
     ]
-    with rasterio.open(probf) as src:
+    with rasterio.open(probf_esp) as src:
         pr = src.read(1).astype("float32")
         pr[pr == src.nodata] = np.nan
-        rp = render_probability(pr, src.transform, src.crs, case / "img" / "prob.png", threshold=limiar_detector())
-    imagens.append(Imagem(id="prob", sensor="Modelo", rotulo=f"Distúrbio sobre floresta no pré, prob ≥ {limiar_detector():.2f} (LightGBM)", data=f"{pre[1]}/{pos[1]}",
+        rp = render_probability(pr, src.transform, src.crs, case / "img" / "prob.png", threshold=_det.limiar_espacial())
+    imagens.append(Imagem(id="prob", sensor="Modelo", rotulo=f"Distúrbio sobre floresta no pré, prob ≥ {_det.limiar_espacial():.2f} ({_det.rotulo()})", data=f"{pre[1]}/{pos[1]}",
                           png="img/prob.png", bounds=rp["bounds_4326"], resolucao_m=10))
     prov = ["pamgia", "sinaflor", "s2", "deter", "prodes"] + (["if100"] if n_arv else [])
     if cbers:
@@ -440,7 +450,7 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     limit += [
         f"Janelas Sentinel-2: pré {pre[0]} a {pre[1]}; pós {pos[0]} a {pos[1]}. Nuvem sem observação limpa: {meta.get('nuvem_pct_pre', 0):.1f}% (pré) e {meta.get('nuvem_pct_pos', 0):.1f}% (pós); cenas na mediana: {meta.get('n_cenas_pre')} e {meta.get('n_cenas_pos')}.",
         "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
-        "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
+        f"Detecção espacial por {_det.rotulo()} (deep learning) e volume calibrado sobre o LightGBM, ambos treinados com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
         "Camadas de UC/TI/embargo não integradas: F6 não avaliado.",
     ]
     if tipo == "POA":
@@ -449,7 +459,7 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     if ninc:
         limit.append(f"Qualidade cadastral: {ninc} árvore(s) IF100 com coordenada a mais de 5 km do polígono (coordenada incoerente); não computadas como indício C.")
 
-    modelo = {"detector": f"lightgbm-v1 (limiar {limiar_detector():.2f})", "calibracao": info["calibracao"],
+    modelo = {"detector": f"{_det.metodo_espacial()} (limiar {_det.limiar_espacial():.2f}); volume: lightgbm (limiar {limiar_detector():.2f})", "calibracao": info["calibracao"],
               "score": "1 − exp(−Σ peso × severidade × confiança)", "s2_meta": {k: meta.get(k) for k in ("crs", "n_cenas_pre", "n_cenas_pos", "n_cenas_limpas_pre", "n_cenas_limpas_pos")}}
     if mc:
         modelo["monte_carlo_upa"] = {k: mc[k] for k in ("upa", "sem_lastro_excesso", "nao_declarado", "nao_declarado_fora", "declarado_upa_m3", "prob_declarado_acima_estimado", "n_celulas", "sigma_upa")}
