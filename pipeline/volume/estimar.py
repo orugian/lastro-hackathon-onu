@@ -60,6 +60,45 @@ def limiar_detector() -> float:
         return 0.5
 
 
+# ---------------------------------------------------------------- máscara de floresta
+NDVI_FLORESTA_MIN = 0.7
+
+
+def prob_floresta(stack_path, prob_path, out_path, prodes_gdf=None, ano_pre: int | None = None,
+                  ndvi_min: float = NDVI_FLORESTA_MIN) -> dict:
+    """Zera a probabilidade de distúrbio em pixels que NÃO eram floresta no pré:
+    NDVI pré < ndvi_min, ou dentro de PRODES com ano <= ano_pre (desmatamento já mapeado até a janela pré).
+    Pixels sem dado permanecem nodata. Grava out_path (GeoTIFF float32) e retorna estatísticas."""
+    from rasterio.features import geometry_mask
+    with rasterio.open(stack_path) as src:
+        red, nir = src.read(3).astype("float32"), src.read(4).astype("float32")
+        nod = src.nodata
+        crs, tr, shape = src.crs, src.transform, (src.height, src.width)
+    with rasterio.open(prob_path) as src:
+        prob = src.read(1).astype("float32")
+        prof = src.profile.copy()
+        pnod = src.nodata
+    valid = (prob != pnod) & np.isfinite(prob) & (red != nod) & (nir != nod)
+    ndvi = np.where(valid, (nir - red) / np.maximum(nir + red, 1e-6), np.nan)
+    floresta = valid & (ndvi >= ndvi_min)
+    n_prodes = 0
+    if prodes_gdf is not None and len(prodes_gdf) and ano_pre is not None:
+        pr = prodes_gdf[prodes_gdf["ano"] <= ano_pre]
+        if len(pr):
+            geoms = [g for g in pr.to_crs(crs).geometry if g is not None and not g.is_empty]
+            if geoms:
+                desm = geometry_mask(geoms, out_shape=shape, transform=tr, invert=True)
+                n_prodes = int((floresta & desm).sum())
+                floresta &= ~desm
+    out = np.where(valid, np.where(floresta, prob, 0.0), pnod).astype("float32")
+    prof.update(count=1, dtype="float32", nodata=pnod, compress="deflate")
+    with rasterio.open(out_path, "w", **prof) as dst:
+        dst.write(out, 1)
+    nv = max(int(valid.sum()), 1)
+    return {"frac_floresta_pre": float(floresta.sum() / nv), "frac_nao_floresta_ndvi": float((valid & (ndvi < ndvi_min)).sum() / nv),
+            "px_excluidos_prodes": n_prodes, "ndvi_min": ndvi_min, "ano_pre": ano_pre}
+
+
 # ---------------------------------------------------------------- features
 def features_celulas(celulas_gdf: gpd.GeoDataFrame, stack_path, prob_path, limiar: float | None = None) -> gpd.GeoDataFrame:
     """Agrega por célula: disturbio_frac (prob >= limiar), prob média, dNDVI média/p10/desvio, dNBR, dNDMI, frac_valida."""
@@ -128,6 +167,8 @@ def modelo_info() -> dict:
     conf = m[1]
     return {"calibracao": conf.get("versao", "lgbm-quantil-v1"), "conformal_q_m3_ha": conf.get("q_m3_ha", 0.0),
             "sigma_upa": conf.get("sigma_upa", 0.35), "cobertura_celula": conf.get("cobertura_celula_conformal"),
+            "sigma_bloco": conf.get("sigma_bloco", 0.3), "cobertura_bloco": conf.get("cobertura_bloco"),
+            "a_frac_excesso_min": conf.get("a_frac_excesso_min", 0.10), "a_fpr": conf.get("a_fpr"),
             "cobertura_upa": conf.get("cobertura_upa_mc"), "r2": conf.get("r2"), "n_upas": conf.get("n_upas"),
             "features": conf.get("features", FEATS)}
 
@@ -242,6 +283,60 @@ def monte_carlo_upa(gdf, n: int = 10000, seed: int = 0, sigma_upa: float | None 
     out["declarado_upa_m3"] = float(vd[m_upa].sum())
     out["prob_declarado_acima_estimado"] = float(np.mean(np.concatenate(res["upa"]) < vd[m_upa].sum())) if len(g) else None
     return out
+
+
+# ---------------------------------------------------------------- blocos 3x3
+BLOCO_K = 3
+
+
+def bloco_ids(ids, k: int = BLOCO_K) -> np.ndarray:
+    """'{crs}_{ix}_{iy}[_f]' -> '{ix//k}_{iy//k}' (bloco de k×k células de 100 m = k² ha)."""
+    out = []
+    for i in ids:
+        parts = str(i).split("_")
+        if parts[-1] == "f":
+            parts = parts[:-1]
+        out.append(f"{int(parts[-2]) // k}_{int(parts[-1]) // k}")
+    return np.array(out)
+
+
+def mc_blocos(q: np.ndarray, blocos: np.ndarray, sigma_bloco: float, n: int = 2000, seed: int = 0) -> pd.DataFrame:
+    """Quantis (p10,p50,p90) da soma por bloco. q: (ncel,3) m³ por célula; fator comum por bloco ~ lognormal(0, sigma_bloco)."""
+    rng = np.random.default_rng(seed)
+    if len(q) == 0:
+        return pd.DataFrame(columns=["bloco", "p10", "p50", "p90"])
+    uniq, inv = np.unique(blocos, return_inverse=True)
+    order = np.argsort(inv, kind="stable")
+    starts = np.r_[0, np.flatnonzero(np.diff(inv[order])) + 1]
+    qs = q[order]
+    res = []
+    for c0 in range(0, n, 500):
+        k = min(500, n - c0)
+        s = amostrar_quantis(qs[:, 0], qs[:, 1], qs[:, 2], rng.random((k, len(qs))))
+        b = np.add.reduceat(s, starts, axis=1)
+        if sigma_bloco > 0:
+            b = b * np.exp(rng.normal(0, sigma_bloco, size=b.shape))
+        res.append(b)
+    p = np.percentile(np.concatenate(res), [10, 50, 90], axis=0)
+    return pd.DataFrame({"bloco": uniq, "p10": p[0], "p50": p[1], "p90": p[2]})
+
+
+def avaliar_blocos(gdf, sigma_bloco: float | None = None, k: int = BLOCO_K, vol_min: float = 20.0, seed: int = 0) -> pd.DataFrame:
+    """Agrega células observáveis dentro da UPA em blocos k×k; classifica bloco sem_lastro se Σ declarado > p90 do bloco e ≥ vol_min m³."""
+    sigma_bloco = modelo_info().get("sigma_bloco", 0.3) if sigma_bloco is None else sigma_bloco
+    g = gdf[gdf["vol_p50"].notna()]
+    if "dentro_upa" in g:
+        g = g[g["dentro_upa"].astype(bool)]
+    if not len(g):
+        return pd.DataFrame(columns=["bloco", "p10", "p50", "p90", "vol_declarado", "n_celulas", "n_arvores", "sem_lastro", "excesso"])
+    bl = bloco_ids(g["id"], k)
+    r = mc_blocos(g[["vol_p10", "vol_p50", "vol_p90"]].to_numpy(float), bl, sigma_bloco, seed=seed)
+    agg = pd.DataFrame({"bloco": bl, "vd": g["vol_declarado"].fillna(0).to_numpy(float), "na": g["n_arvores"].fillna(0).to_numpy(int)}).groupby("bloco").agg(
+        vol_declarado=("vd", "sum"), n_celulas=("vd", "size"), n_arvores=("na", "sum")).reset_index()
+    r = r.merge(agg, on="bloco")
+    r["sem_lastro"] = (r["vol_declarado"] > r["p90"]) & (r["vol_declarado"] >= vol_min)
+    r["excesso"] = np.where(r["sem_lastro"], r["vol_declarado"] - r["p90"], 0.0)
+    return r
 
 
 # ---------------------------------------------------------------- corte raso

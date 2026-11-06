@@ -48,12 +48,32 @@ def img_tag(path: Path, alt: str) -> str:
     return f'<img alt="{alt}" src="data:image/png;base64,{b64}">'
 
 
-def pick_screens():
-    """Prefere screenshots reais (sem prefixo mock-) mais recentes."""
+def masked_screenshot(path: Path, autex: str | None) -> str:
+    """Embute o PNG (JPEG base64) cobrindo o nº AUTEX do cabeçalho do dossiê (região fixa no layout 1440x900)."""
+    from io import BytesIO
+    from PIL import Image, ImageDraw, ImageFont
+    im = Image.open(path).convert("RGB")
+    if autex and im.size == (1440, 900):
+        d = ImageDraw.Draw(im)
+        d.rectangle([80, 94, 300, 130], fill=(243, 244, 232))
+        try:
+            f = ImageFont.truetype("C:/Windows/Fonts/consolab.ttf", 26)
+        except Exception:
+            f = ImageFont.load_default()
+        d.text((83, 98), mask(autex), fill=(23, 58, 44), font=f)
+    buf = BytesIO()
+    im.save(buf, "JPEG", quality=88)
+    return f'<img alt="Dossiê do Lastro" src="data:image/jpeg;base64,{base64.b64encode(buf.getvalue()).decode()}">'
+
+
+def pick_screens(min_mtime: float | None = None):
+    """Prefere screenshots reais (sem prefixo mock-) mais recentes que min_mtime (index regenerado)."""
     if not SCREENS.exists():
         return None, None, True
     pngs = sorted(SCREENS.glob("*.png"), key=lambda p: p.stat().st_mtime, reverse=True)
-    real = [p for p in pngs if not p.name.startswith("mock-")]
+    real = [p for p in pngs if not p.name.startswith("mock-") and (min_mtime is None or p.stat().st_mtime >= min_mtime)]
+    if min_mtime is None:
+        real = []
     pool = real or pngs
     is_mock = not real
 
@@ -169,12 +189,32 @@ def calib_vals():
 
 
 def dl_vals():
-    z = ROOT / "lastro_dl_resultados.zip"
-    try:
-        m = json.loads(zipfile.ZipFile(z).read("metrics_dl.json"))
-        return {"DL_IOU": br(m["iou"], 2)}
-    except Exception:
-        return {"DL_IOU": "[a preencher]"}
+    m = None
+    j = load(ART / "metrics" / "dl.json")
+    if j:
+        m = j.get("metricas") if isinstance(j.get("metricas"), dict) and "iou" in j.get("metricas", {}) else None
+    if m is None:
+        try:
+            m = json.loads(zipfile.ZipFile(ROOT / "lastro_dl_resultados.zip").read("metrics_dl.json"))
+        except Exception:
+            return {"DL_IOU": "[a preencher]"}
+    lgb = (m.get("lightgbm_mesmos_chips") or {}).get("iou")
+    otsu = (m.get("baseline_mesmos_chips") or {}).get("iou")
+    v = {"DL_IOU": br(m["iou"], 2), "DL_LGB_IOU": br(lgb, 2) if lgb else "[a preencher]",
+         "DL_OTSU_IOU": br(otsu, 2) if otsu else "[a preencher]", "DL_NPX": br(m.get("n_pixels_teste", 0) / 1e6, 2) + " mi",
+         "DL_GAIN": br(m["iou"] - lgb, 3) if lgb else "[a preencher]"}
+    ex = ROOT / "docs" / "img" / "dl_exemplo_1.png"
+    if ex.exists():
+        from io import BytesIO
+        from PIL import Image
+        im = Image.open(ex).convert("RGB")
+        im.thumbnail((1100, 1100))
+        buf = BytesIO()
+        im.save(buf, "JPEG", quality=85)
+        v["IMG_DL"] = f'<img alt="Exemplo de predição da U-Net" src="data:image/jpeg;base64,{base64.b64encode(buf.getvalue()).decode()}">'
+    else:
+        v["IMG_DL"] = ""
+    return v
 
 
 MIN_INDEX_TS = "2026-11-06T04:20"  # só usar index regenerado após a correção da flag B (pedido do orquestrador)
@@ -197,8 +237,14 @@ def index_vals():
     n_img = t.get("com_imagem", sum(1 for c in real if c.get("analise_imagem")))
     n_ind = t.get("com_indicio", sum(1 for c in real if any(f["status"] == "indicio" for f in c.get("flags", []))))
     rows = []
+
+    def suspeito(c):  # área de distúrbio (dentro + fora) > 3× autorizada: possível artefato, fica fora do slide
+        a, d = c.get("area_autorizada_ha"), (c.get("area_disturbio_ha") or 0) + (c.get("area_disturbio_fora_ha") or 0)
+        return bool(a) and d > 3 * a
     top = sorted(casos, key=lambda c: -c["score"])
-    top = [c for c in top if any(f["status"] == "indicio" for f in c.get("flags", []))][:4]
+    top = [c for c in top if any(f["status"] == "indicio" for f in c.get("flags", []))]
+    n_susp = sum(1 for c in top[:8] if suspeito(c))
+    top = [c for c in top if not suspeito(c)][:4]
     for c in top:
         fl = "".join(f'<span class="fl">{f["codigo"]}</span>' for f in c["flags"] if f["status"] == "indicio")
         sim = '<span class="sim">SIMULAÇÃO</span>' if c.get("source_mode") == "simulado" else ""
@@ -213,8 +259,16 @@ def index_vals():
     a_ind = sum(1 for c in casos for f in c.get("flags", []) if f["codigo"] == "A" and f["status"] == "indicio")
     vol = t.get("volume_declarado_total_m3")
     k4 = (br(vol / 1e6, 2) + " mi m³") if vol else FILL
-    note = (f'<p class="rule" style="margin-top:20px;font-size:25px;padding:12px 24px">Assinatura A: {a_ind} indício e {a_inc} <b>inconclusivos</b>. '
-            f'Há células sem lastro, mas o total da UPA fica dentro do p90 da imagem. É motivo para olhar, não para concluir.</p>') if (a_inc or a_ind) else ""
+    n_a_img = sum(1 for c in casos if c.get("analise_imagem") and c.get("tipo") == "POA")
+    if a_ind or a_inc:
+        txt_a = f"Assinatura A (volume sem lastro): {a_ind} indício(s) e {a_inc} inconclusivo(s) entre os POA com imagem."
+    else:
+        txt_a = (f"Assinatura A (volume sem lastro): <b>sem indício</b> nos {n_a_img} POA com imagem. O volume declarado "
+                 f"cabe no intervalo compatível com a imagem.")
+    if n_susp:
+        txt_a += (f" {n_susp} caso(s) de corte raso com área de distúrbio acima de 3× a autorizada ficaram fora da tabela: "
+                  f"possível artefato, em verificação.")
+    note = f'<p class="rule" style="margin-top:20px;font-size:25px;padding:12px 24px">{txt_a}</p>'
     return {"K_AVALIADAS": br(n_av), "K_IMAGEM": br(n_img), "K_INDICIO": k4,
             "K_INDICIO_LBL": f"declarados no IF100 (2022+) confrontados; {br(n_ind)} autorizações com ao menos um indício",
             "TOP_TABLE": table + note,
@@ -227,13 +281,19 @@ def main():
     vals.update(detector_vals())
     vals.update(calib_vals())
     vals.update(dl_vals())
-    iv, _ = index_vals()
+    iv, idx = index_vals()
     vals.update(iv)
-    dossie, _, is_mock = pick_screens()
+    # screenshots reais só se forem posteriores ao index regenerado (senão mostram números antigos de B)
+    min_mtime = (ART / "index.json").stat().st_mtime if idx else None
+    dossie, _, is_mock = pick_screens(min_mtime)
     if dossie:
-        vals["IMG_DOSSIE"] = img_tag(dossie, "Dossiê do Lastro")
+        top = None
+        if idx and not is_mock:
+            casos = sorted(idx["casos"], key=lambda c: -c["score"])
+            top = next((c["autex"] for c in casos if c.get("analise_imagem")), None)
+        vals["IMG_DOSSIE"] = masked_screenshot(dossie, top)
         vals["CAP_DOSSIE"] = ("Tela do dossiê com dados de demonstração (mock), marcada como SIMULAÇÃO." if is_mock
-                              else "Dossiê de um caso real do polo AMACRO.")
+                              else f"Dossiê de um caso real do polo AMACRO (AUTEX {mask(top) if top else 'mascarado'}).")
     else:
         vals["IMG_DOSSIE"] = f'<div style="padding:200px;text-align:center">{FILL}</div>'
         vals["CAP_DOSSIE"] = "Screenshot do dossiê pendente."

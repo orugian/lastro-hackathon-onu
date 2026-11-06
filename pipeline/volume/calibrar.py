@@ -27,7 +27,7 @@ from pipeline.volume.estimar import FEATS, FRAC_VALIDA_MIN, VOL_DIR, features_ce
 
 ROOT = Path(__file__).resolve().parents[2]
 PROC = ROOT / "data" / "processed"
-STACKS = VOL_DIR / "stacks"
+STACKS = VOL_DIR / "stacks_v2"  # janelas sazonais (estação seca pré/pós); v1 usava janelas_automaticas
 METRICS = ROOT / "data" / "artifacts" / "metrics"
 
 
@@ -52,14 +52,15 @@ def _aoi(geom):
 
 
 def baixar_um(row) -> dict:
-    from pipeline.imagery.s2 import baixar_par_s2, janelas_automaticas
+    from pipeline.imagery.s2 import baixar_par_s2
+    from pipeline.volume.janelas import janelas_sazonais
     from pipeline.detect.predict import prever
     from pipeline.volume.estimar import patch_s2_utm
     patch_s2_utm()
     autex = row["autex"]
     dest = STACKS / autex
     t0 = time.monotonic()
-    pre, pos = janelas_automaticas(row["data_expl_min"], row["data_expl_max"], row["validade_ini"])
+    pre, pos, _ = janelas_sazonais("POA", row["data_expl_min"], row["data_expl_max"], row["validade_ini"], row["validade_fim"])
     meta = baixar_par_s2(autex, _aoi(row["geometry"]), pre, pos, dest)
     if not (dest / "prob.tif").exists():
         prever(dest / "s2_stack.tif", dest)
@@ -84,8 +85,10 @@ def baixar(n: int, workers: int = 4):
 
 # ------------------------------------------------------------------ dataset
 def montar_dataset() -> pd.DataFrame:
+    from pipeline.volume.estimar import prob_floresta
     a = gpd.read_parquet(PROC / "autorizacoes.parquet")
     t = gpd.read_parquet(PROC / "arvores_if100.parquet")
+    prodes = gpd.read_parquet(PROC / "prodes.parquet")
     rows = []
     for d in sorted(STACKS.glob("*")):
         if not ((d / "s2_stack.tif").exists() and (d / "prob.tif").exists()):
@@ -94,10 +97,12 @@ def montar_dataset() -> pd.DataFrame:
         poly = a.loc[a.autex == autex, "geometry"]
         if poly.empty:
             continue
+        meta = json.loads((d / "s2_meta.json").read_text(encoding="utf-8"))
+        prob_floresta(d / "s2_stack.tif", d / "prob.tif", d / "prob_floresta.tif", prodes, int(meta["pre"][0][:4]))
         cel = grade_celulas(poly.iloc[0], 100)
         tr = t[(t.autex == autex) & t.dentro_upa.fillna(False).astype(bool)]
         cel = agrega_arvores(cel, tr)
-        cel = features_celulas(cel, d / "s2_stack.tif", d / "prob.tif")
+        cel = features_celulas(cel, d / "s2_stack.tif", d / "prob_floresta.tif")
         cel["autex"] = autex
         rows.append(pd.DataFrame(cel.drop(columns="geometry")))
         print(autex, len(cel), flush=True)
@@ -156,6 +161,42 @@ def _upa_mc(dfu, q, sigma, n=2000, seed=0):
     return np.percentile(s, [10, 50, 90])
 
 
+def avaliar_regra_A(df, q_m3_ha, area, sigma_upa):
+    """Fora da amostra (quantis OOF + CQR): calibra sigma_bloco (fator comum por bloco 3×3) para cobertura
+    ~80% do Σ declarado por bloco, e mede a taxa de disparo da regra A nas UPAs limpas (≈ falso positivo)."""
+    from pipeline.volume.estimar import bloco_ids, mc_blocos
+    q = q_m3_ha * area[:, None]
+    blocos = np.array([f"{u}|{b}" for u, b in zip(df["autex"].to_numpy(), bloco_ids(df["id"]))])
+    vd = df["vol_declarado"].fillna(0).to_numpy(float)
+    vb = pd.Series(vd).groupby(blocos).sum()
+    grid = {}
+    for s in (0.0, 0.2, 0.35, 0.5, 0.7, 0.9):
+        r = mc_blocos(q, blocos, s, n=1000).set_index("bloco").join(vb.rename("vd"))
+        grid[s] = (r, float(((r.vd >= r.p10) & (r.vd <= r.p90)).mean()))
+    s_best = min(grid, key=lambda s: abs(grid[s][1] - 0.80))
+    r = grid[s_best][0].reset_index()
+    r["autex"] = r["bloco"].str.split("|").str[0]
+    r["sl"] = (r.vd > r.p90) & (r.vd >= 20)
+    r["exc"] = np.where(r.sl, r.vd - r.p90, 0)
+    up = r.groupby("autex").agg(vd=("vd", "sum"), exc=("exc", "sum"), nsl=("sl", "sum"))
+    up["frac"] = up.exc / up.vd.clip(lower=1)
+    # limiar da fração de excesso: p95 nas UPAs limpas (fora da amostra) -> ~5% de disparo por construção
+    a_frac = float(max(0.10, np.quantile(up.frac, 0.95)))
+    # critério UPA: Σ declarado > p90 do MC da UPA
+    upa_div = {}
+    for u, idx in df.groupby("autex").indices.items():
+        p = _upa_mc(None, q[idx], sigma_upa)
+        upa_div[u] = vd[idx].sum() > p[2]
+    up["upa_div"] = pd.Series(upa_div)
+    up["dispara"] = up.upa_div | ((up.frac >= a_frac) & (up.exc >= 50))
+    return {"sigma_bloco": s_best, "cobertura_bloco": grid[s_best][1],
+            "cobertura_bloco_grid": {str(k): v[1] for k, v in grid.items()},
+            "n_blocos": int(len(r)), "frac_blocos_sem_lastro": float(r.sl.mean()),
+            "a_frac_excesso_min": a_frac, "a_frac_excesso_dist": up.frac.describe().round(3).to_dict(),
+            "a_taxa_disparo_upas_limpas": float(up.dispara.mean()),
+            "a_taxa_disparo_so_upa": float(up.upa_div.mean())}
+
+
 def treinar(df: pd.DataFrame, k: int = 5):
     from sklearn.model_selection import GroupKFold
     X = df[FEATS].astype(float).to_numpy()
@@ -208,6 +249,7 @@ def treinar(df: pd.DataFrame, k: int = 5):
         "upa_mc_antes": upa_metrics(oof, sigma_upa), "upa_mc_conformal": upa_metrics(oof_c, sigma_upa),
         "sigma_upa": sigma_upa, "q_conformal_folds_m3_ha": sorted(set(np.round(qconf_fold, 3).tolist())),
     }
+    metr.update(avaliar_regra_A(df, oof_c, area, sigma_upa))
     # modelo final + conformal final (calibração em 25% das UPAs)
     upas = np.unique(g)
     rng = np.random.default_rng(1)
@@ -251,6 +293,8 @@ def main(argv=None):
             "cobertura_celula_antes": metr["celula_antes"]["cobertura_p10_p90"],
             "cobertura_celula_conformal": metr["celula_conformal"]["cobertura_p10_p90"],
             "cobertura_upa_mc": metr["upa_mc_conformal"]["cobertura_p10_p90"],
+            "sigma_bloco": metr["sigma_bloco"], "cobertura_bloco": metr["cobertura_bloco"],
+            "a_frac_excesso_min": metr["a_frac_excesso_min"], "a_fpr": metr["a_taxa_disparo_upas_limpas"],
             "r2": metr["celula_antes"]["r2"], "n_upas": int(df.autex.nunique()), "n_celulas": len(df),
             "gerado_em": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     (VOL_DIR / "conformal.json").write_text(json.dumps(conf, indent=1), encoding="utf-8")
@@ -264,6 +308,12 @@ def main(argv=None):
         f"UPA (Monte Carlo, fator comum lognormal σ={metr['sigma_upa']:.2f}): R² {ua['r2']:.2f}, erro relativo mediano "
         f"{ua['erro_rel_mediano']:.0%}, cobertura {ua['cobertura_p10_p90']:.0%} antes e {uc['cobertura_p10_p90']:.0%} após CQR. "
         "Cobertura reportada no campo principal = célula após conformal. "
+        f"Regra A avaliada em blocos 3×3 (9 ha) e na UPA (onde a incerteza está calibrada; nunca por célula isolada): "
+        f"fator comum por bloco lognormal σ={metr['sigma_bloco']:.2f}; {metr['frac_blocos_sem_lastro']:.1%} dos blocos limpos excedem o p90 "
+        f"(nominal 10%; cobertura bilateral {metr['cobertura_bloco']:.0%}, a cauda inferior é sub-coberta por blocos com declarado ≈ 0); "
+        f"taxa de disparo de A nas 72 UPAs limpas (fora da amostra) = {metr['a_taxa_disparo_upas_limpas']:.1%} (≈ falso positivo). "
+        "Curva: corte parcial com demais features na mediana; acima de ~0,4 de fração de distúrbio há poucas células de manejo "
+        "e o p50 cai (sem restrição monotônica: LightGBM não a suporta com objective=quantile). "
         "Limitações: (1) a calibração usa UPAs sem indício documental nem DETER, mas pode conter divergência não detectada, o que "
         "infla a relação declarado/distúrbio; (2) clareiras de árvore isolada (200–600 m²) são sub-pixel em 10 m e fecham em meses; "
         "(3) nuvem: células com < 70% de pixels válidos são descartadas; (4) coordenadas IF100 têm erro de GPS de dezenas de metros, "

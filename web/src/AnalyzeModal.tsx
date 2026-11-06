@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { initialize, staticMode } from "./data";
 import { Icon } from "./ui";
 
@@ -57,7 +57,7 @@ export function AnalyzeModal({ close, initial = "" }: { close: () => void; initi
         }
         if (cur.status === "error")
           throw Error(
-            `Não foi possível analisar a autorização ${id} agora. Confira o número AUTEX ou tente mais tarde; os dossiês já processados seguem disponíveis na triagem.${cur.mensagem ? ` (${cur.mensagem})` : ""}`,
+            `Não foi possível analisar a autorização ${id} agora. Confira o número AUTEX ou tente mais tarde; os dossiês já processados seguem disponíveis na triagem.`,
           );
         if (!jobId) throw Error("A API não retornou o identificador da análise.");
         await new Promise((res) => setTimeout(res, 1000));

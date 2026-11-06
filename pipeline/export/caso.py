@@ -87,12 +87,39 @@ def janelas_caso(tipo, data_min, data_max, val_ini, val_fim):
 
 
 # ------------------------------------------------------------------ mudança
-def poligonos_mudanca(pol_path, upa_u, outras_u, crs, pre, pos):
-    fc = json.loads(Path(pol_path).read_text(encoding="utf-8"))
-    if not fc["features"]:
+def vetorizar_mudanca(prob_path, limiar: float, area_min_ha: float = 0.1) -> gpd.GeoDataFrame:
+    """Máscara prob ≥ limiar (já restrita a floresta no pré) -> abertura morfológica 3×3 (remove faixas de 1 pixel)
+    -> polígonos com área (ha, UTM do raster) e prob média."""
+    import rasterio
+    from rasterio.features import rasterize, shapes
+    from scipy.ndimage import binary_opening
+    from shapely.geometry import shape
+    with rasterio.open(prob_path) as src:
+        prob = src.read(1).astype("float32")
+        nod, tr, crs = src.nodata, src.transform, src.crs
+    valid = (prob != nod) & np.isfinite(prob)
+    mask = binary_opening(valid & (prob >= limiar), structure=np.ones((3, 3), bool)) & valid
+    geoms = [shape(g) for g, v in shapes(mask.astype("uint8"), mask=mask, transform=tr) if v == 1]
+    g = gpd.GeoDataFrame(geometry=geoms, crs=crs)
+    if not len(g):
+        return gpd.GeoDataFrame({"prob": []}, geometry=[], crs=crs)
+    g = g[g.area >= area_min_ha * 1e4].reset_index(drop=True)
+    if len(g):
+        ids = rasterize(((geo, i + 1) for i, geo in enumerate(g.geometry)), out_shape=prob.shape, transform=tr, fill=0, dtype="int32")
+        sel = (ids > 0) & mask
+        s = np.bincount(ids[sel], weights=prob[sel], minlength=len(g) + 1)
+        n = np.bincount(ids[sel], minlength=len(g) + 1)
+        g["prob"] = (s / np.maximum(n, 1))[1:]
+    else:
+        g["prob"] = []
+    return g
+
+
+def poligonos_mudanca(g, upa_u, outras_u, crs, pre, pos):
+    if g is None or not len(g):
         return gpd.GeoDataFrame({"id": [], "area_ha": [], "prob": [], "dentro_upa": [], "dist_limite_m": [], "coberto_outra": []},
                                 geometry=[], crs=crs)
-    g = gpd.GeoDataFrame.from_features(fc["features"], crs=4326).to_crs(crs)
+    g = g.to_crs(crs)
     g["geometry"] = g.geometry.buffer(0)
     rows = []
     for _, r in g.iterrows():
@@ -124,7 +151,8 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     from pipeline.imagery.render import render_probability
     from pipeline.imagery.s2 import baixar_par_s2
     from pipeline.volume.estimar import (classificar_celulas, estimar_celulas, modelo_info, monte_carlo_upa,
-                                         patch_s2_utm, volume_corte_raso, limiar_detector)
+                                         patch_s2_utm, volume_corte_raso, limiar_detector, prob_floresta,
+                                         avaliar_blocos, bloco_ids)
     import rasterio
 
     def p(etapa, frac):
@@ -159,7 +187,9 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
 
     # 1. imagem
     p("Baixando Sentinel-2", 0.15)
-    pre, pos = janelas_caso(tipo, nn(doc.get("data_expl_min")), nn(doc.get("data_expl_max")), val_ini, val_fim)
+    from pipeline.volume.janelas import janelas_sazonais
+    pre, pos, lim_jan = janelas_sazonais(tipo, nn(doc.get("data_expl_min")), nn(doc.get("data_expl_max")), val_ini, val_fim)
+    limit += lim_jan
     patch_s2_utm()
     idir = IMG / autex
     idir.mkdir(parents=True, exist_ok=True)
@@ -179,15 +209,21 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     p("Detectando distúrbio (LightGBM)", 0.45)
     if not (idir / "prob.tif").exists() or (idir / "prob.tif").stat().st_mtime < stack.stat().st_mtime:
         prever(stack, idir)
-
-    # 2. mudança
-    mud = poligonos_mudanca(idir / "poligonos.geojson", upa_u, outras_u, crs, pre, pos)
-    area_dentro = float(mud.loc[mud.dentro_upa.astype(bool), "area_ha"].sum()) if len(mud) else 0.0
-    fora_ok = mud[(~mud.dentro_upa.astype(bool)) & (mud.dist_limite_m > F.TOL_BORDA_M) & (mud.prob >= F.PROB_MIN_B) & (~mud.coberto_outra.astype(bool))] if len(mud) else mud
-    area_fora = float(fora_ok["area_ha"].sum()) if len(fora_ok) else 0.0
-
     deter_aoi = D.deter[D.deter.intersects(aoi_4326)].copy()
     prodes_aoi = D.prodes[D.prodes.intersects(aoi_4326)].copy()
+    # máscara de floresta no pré: NDVI pré ≥ 0,7 e fora de PRODES até o ano da janela pré
+    flo = prob_floresta(stack, idir / "prob.tif", idir / "prob_floresta.tif", prodes_aoi, int(pre[0][:4]))
+    probf = idir / "prob_floresta.tif"
+
+    # 2. mudança
+    mud = poligonos_mudanca(vetorizar_mudanca(probf, limiar_detector()), upa_u, outras_u, crs, pre, pos)
+    area_dentro = float(mud.loc[mud.dentro_upa.astype(bool), "area_ha"].sum()) if len(mud) else 0.0
+    fora_ok = mud[(~mud.dentro_upa.astype(bool)) & (mud.dist_limite_m > F.TOL_BORDA_M) & (mud.prob >= F.PROB_MIN_B)
+                  & (mud.area_ha >= F.AREA_MIN_POLIGONO_HA) & (~mud.coberto_outra.astype(bool))] if len(mud) else mud
+    area_fora = float(fora_ok["area_ha"].sum()) if len(fora_ok) else 0.0
+    area_buffer_ha = float(buffer_u.difference(upa_u).area / 1e4)
+    limit.append(f"Máscara de floresta: só conta distúrbio em pixel com NDVI pré ≥ {flo['ndvi_min']} e fora de PRODES até {flo['ano_pre']}; "
+                 f"{100*flo['frac_floresta_pre']:.0f}% da AOI observável era floresta no pré.")
     info = modelo_info()
 
     # 3. células + volume (POA)
@@ -210,9 +246,17 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
             parts.append(cout)
         cel = gpd.GeoDataFrame(pd.concat(parts, ignore_index=True), crs=4326)
         cel = agrega_arvores(cel, arv[arv.geometry.notna()] if len(arv) else arv)
-        cel = estimar_celulas(cel, stack, idir / "prob.tif")
+        cel = estimar_celulas(cel, stack, probf)
         cel = classificar_celulas(cel)
         mc = monte_carlo_upa(cel, n=10000, seed=0)
+        blocos = avaliar_blocos(cel)
+        # células destacadas no mapa = células com árvores dentro de blocos sem_lastro
+        bl_sl = set(blocos.loc[blocos.sem_lastro, "bloco"])
+        if len(cel):
+            cb = pd.Series(bloco_ids(cel["id"]), index=cel.index)
+            obs = cel.classe != "nao_observavel"
+            cel.loc[(cel.classe == "sem_lastro") & ~cb.isin(bl_sl), "classe"] = "consistente"
+            cel.loc[obs & cel.dentro_upa & cb.isin(bl_sl) & (cel.n_arvores > 0) & (cel.vol_declarado > cel.vol_p50), "classe"] = "sem_lastro"
         vol_est = {k: round(v, 1) for k, v in mc["upa"].items()}
         parametros += [
             dict(nome="Volume por célula de 1 ha a partir da imagem", distribuicao="quantis LightGBM q10/q50/q90 + ajuste conformal (CQR)",
@@ -233,7 +277,9 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
         contig = mud[(~mud.dentro_upa.astype(bool)) & (~mud.coberto_outra.astype(bool))] if len(mud) else mud
         if len(contig):
             contig = contig[contig.geometry.distance(upa_u) <= 100]
-        area_contig = float(contig["area_ha"].sum()) if len(contig) else 0.0
+        # só a parte contígua até 500 m do limite (evita somar desmatamento regional que apenas encosta no polígono)
+        anel = upa_u.buffer(500).difference(upa_u)
+        area_contig = float(contig.geometry.intersection(anel).area.sum() / 1e4) if len(contig) else 0.0
         area_desm = area_dentro + area_contig
         r = volume_corte_raso(area_desm, estoque, None)
         vol_est = {k: (round(r[k], 1) if r[k] is not None else None) for k in ("p10", "p50", "p90")}
@@ -249,8 +295,9 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     deter_u = deter_aoi.to_crs(crs)
     mud_valid = mud
     if tipo == "POA":
-        fl = [F.flag_A(cel, mc, info.get("cobertura_celula"), n_arv),
-              F.flag_B(mud_valid, cel, deter_u, mc, "POA", area_upa_ha=area_aut),
+        fl = [F.flag_A(cel, mc, info.get("cobertura_bloco") or info.get("cobertura_celula"), n_arv, blocos=blocos,
+                       frac_min=info.get("a_frac_excesso_min", F.A_FRAC_MIN)),
+              F.flag_B(mud_valid, cel, deter_u, mc, "POA", area_upa_ha=area_aut, area_buffer_ha=area_buffer_ha),
               F.flag_C(doc), F.flag_D_poa(doc, area_aut)]
         fe = F.flag_E_poa(doc)
         fe_img = F.flag_E_imagem(area_dentro, pre, pos, (val_ini, val_fim), "POA")
@@ -260,7 +307,7 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
             fe.evidencias.append(Evidencia(tipo="texto", descricao="Imagem: " + fe_img.evidencias[0].descricao + f" (relação com a validade: {fe_img.status})", fonte="s2"))
         fl.append(fe)
     else:
-        fl = [F.flag_B(mud_valid, None, deter_u, None, tipo, vol_fora=vol_fora),
+        fl = [F.flag_B(mud_valid, None, deter_u, None, tipo, vol_fora=vol_fora, area_upa_ha=area_aut, area_buffer_ha=area_buffer_ha),
               F.flag_F2(area_desm, area_aut),
               F.flag_D_asv(vol_est if vol_est.get("p10") is not None else None, nn(doc.get("volume_autorizado_m3"))),
               F.flag_E_imagem(area_dentro, pre, pos, (val_ini, val_fim), tipo)]
@@ -280,11 +327,11 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
                bounds=b, resolucao_m=10, nuvem_pct=round(meta.get("nuvem_pct_pos", 0), 1), par="pos"),
         Imagem(id="dndvi", sensor="Derivado", rotulo="Queda de NDVI (pós − pré)", data=f"{pre[1]}/{pos[1]}", png="img/dndvi.png", bounds=b, resolucao_m=10),
     ]
-    with rasterio.open(idir / "prob.tif") as src:
+    with rasterio.open(probf) as src:
         pr = src.read(1).astype("float32")
         pr[pr == src.nodata] = np.nan
         rp = render_probability(pr, src.transform, src.crs, case / "img" / "prob.png", threshold=limiar_detector())
-    imagens.append(Imagem(id="prob", sensor="Modelo", rotulo=f"Probabilidade de distúrbio ≥ {limiar_detector():.2f} (LightGBM)", data=f"{pre[1]}/{pos[1]}",
+    imagens.append(Imagem(id="prob", sensor="Modelo", rotulo=f"Distúrbio sobre floresta no pré, prob ≥ {limiar_detector():.2f} (LightGBM)", data=f"{pre[1]}/{pos[1]}",
                           png="img/prob.png", bounds=rp["bounds_4326"], resolucao_m=10))
     prov = ["pamgia", "sinaflor", "s2", "deter", "prodes"] + (["if100"] if n_arv else [])
     if cbers:
@@ -385,6 +432,10 @@ def processar_caso(autex: str, cbers: bool = False, progress_cb: Optional[Callab
     if mc:
         modelo["monte_carlo_upa"] = {k: mc[k] for k in ("upa", "sem_lastro_excesso", "nao_declarado", "nao_declarado_fora", "declarado_upa_m3", "prob_declarado_acima_estimado", "n_celulas", "sigma_upa")}
         modelo["celulas_por_classe"] = cel[cel.dentro_upa].classe.value_counts().to_dict()
+        modelo["blocos_9ha"] = {"n": int(len(blocos)), "sem_lastro": int(blocos.sem_lastro.sum()),
+                                "excesso_m3": round(float(blocos.excesso.sum()), 1), "sigma_bloco": info.get("sigma_bloco")}
+    modelo["mascara_floresta"] = flo
+    modelo["area_buffer_ha"] = round(area_buffer_ha, 1)
     parametros += [dict(nome="Tolerância de borda", distribuicao="fixo", valor=F.TOL_BORDA_M, unidade="m", origem="2 pixels Sentinel-2 / erro de GPS"),
                    dict(nome="Teto de intensidade", distribuicao="fixo", valor=F.INTENSIDADE_MAX_M3_HA, unidade="m³/ha", origem="regra D")]
     parametros += parametros_score()

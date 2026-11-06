@@ -42,8 +42,9 @@ Os dados brutos ficam em `data/raw/` (`scripts/download_bg.ps1`). Todas as etapa
 | Árvores com coordenada incoerente (> 5 km do polígono) | **810**, tratadas como qualidade cadastral, não como indício | IF100 + PAMGIA |
 | Razão explorado/autorizado (IF100, agregada por autorização) | mediana **0,98**, p95 **1,05** | IF100 |
 | Detector LightGBM vs baseline Otsu (fora da amostra, 65.500 px) | IoU **0,561** vs 0,283 · F1 **0,719** vs 0,442 | `data/artifacts/metrics/detector.json` |
-| Calibração imagem → volume (72 UPAs, 17.193 células, GroupKFold por UPA) | cobertura empírica p10–p90 de **83,5%** por célula (79,0% antes do conformal) e **88,9%** por UPA, contra 80% nominais | `data/artifacts/metrics/calibracao.json` |
-| Triagem exportada (casos com imagem, indícios A/B) | [a preencher] (aguardando regeneração do index após correção da flag B) | `data/artifacts/index.json` |
+| Deep learning (Colab, experimental, mesmos 1,98 mi px, blocos de 25 km) | U-Net siamesa IoU **0,742** × LightGBM 0,705 × Otsu 0,432. Ainda não integrada; o operacional segue LightGBM | `data/artifacts/metrics/dl.json` |
+| Calibração imagem → volume (72 UPAs, 17.193 células, GroupKFold por UPA) | cobertura empírica p10–p90 de **84,2%** por célula (78,8% antes do conformal) e **88,9%** por UPA, contra 80% nominais | `data/artifacts/metrics/calibracao.json` |
+| Triagem exportada | 1.142 autorizações; **5** com análise de imagem; **48** com ao menos um indício (B 5 · C 11 · D 11 · E 29 · F2 2; A 0) | `data/artifacts/index.json` (06/11/2026 07:33Z) |
 
 ## Documentação
 

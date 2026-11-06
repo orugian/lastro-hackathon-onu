@@ -5,7 +5,7 @@
 | Campo | Valor |
 |---|---|
 | Sistema | Lastro: triagem da consistência entre volume de madeira declarado (IF100) e o que o satélite observa |
-| Versão | detector `lightgbm` (limiar 0,37) · calibração `lgbm-quantil-v1+cqr` · contrato de artefatos v1.0 |
+| Versão | detector operacional `lightgbm` (limiar 0,37) · calibração `lgbm-quantil-v1+cqr` · contrato de artefatos v1.0 · U-Net siamesa (Colab) experimental, ainda não integrada |
 | Região | Polo AMACRO: Sul do AM (Humaitá, Lábrea, Novo Aripuanã, Manicoré, Canutama) + Porto Velho e Candeias do Jamari (RO) |
 | Período | Explorações e imagens 2022–2026 |
 | Arquivos de métricas | `data/artifacts/metrics/detector.json`, `calibracao.json`, `montecarlo.json` |
@@ -55,9 +55,9 @@ O LightGBM dobra o IoU do baseline. O baseline é muito preciso, mas perde 71% d
 O corte seletivo, que é o caso principal do Lastro, é o mais difícil: o modelo encontra cerca de 57% dos pixels de referência. Por isso a decisão é tomada por célula e por UPA, e não por pixel.
 
 ### Trilha de deep learning (Colab, experimental)
-O notebook `colab/lastro_dl.ipynb` rodou numa Tesla T4 em modo rápido: 400 chips de 224×224 px, 9 épocas e early stopping. O Prithvi-EO-2.0 falhou na importação (incompatibilidade TerraTorch/TorchGeo), e o fallback **U-Net siamesa (ResNet34)** foi usado.
+O notebook `colab/lastro_dl.ipynb` rodou numa Tesla T4 em modo rápido: 400 chips de 224×224 px, 9 épocas e early stopping. O modelo usado foi uma **U-Net siamesa (encoder ResNet34 compartilhado entre pré e pós)**.
 
-Protocolo próprio: blocos de 25 km, split 70/15/15 por bloco, 1.977.980 pixels de teste.
+Protocolo próprio: blocos UTM de 25 km, split 70/15/15 por bloco, seed 42, 1.977.980 pixels de teste espacial. A amostra é enriquecida em positivos, então não estima prevalência regional.
 
 | Modelo (mesmos chips e pixels de teste) | IoU | F1 | Precisão | Recall |
 |---|---|---|---|---|
@@ -65,9 +65,17 @@ Protocolo próprio: blocos de 25 km, split 70/15/15 por bloco, 1.977.980 pixels 
 | LightGBM refeito nos chips | 0,705 | 0,827 | 0,876 | 0,783 |
 | **U-Net siamesa** | **0,742** | **0,852** | 0,821 | 0,885 |
 
-Fonte: `lastro_dl_resultados.zip` → `metrics_dl.json`.
+Fontes: `data/artifacts/metrics/dl.json` (métricas e config) e as entradas `[Colab]` em `data/artifacts/metrics/detector.json`. Os três modelos foram avaliados **nos mesmos pixels** de teste espacial.
 
-**Esses números não são comparáveis com a tabela anterior**, porque o protocolo é diferente (blocos de 25 km, um único split, chips enriquecidos em positivos). Dentro do mesmo protocolo, a U-Net supera o LightGBM em +0,037 de IoU. Ela **não** foi integrada ao pipeline operacional nesta versão. Próximo passo: rodar o detector local nos mesmos chips (`split_manifest.json`) e só então decidir a substituição.
+**Leitura.** Nos mesmos pixels, a U-Net supera o LightGBM em **+0,037 de IoU** (0,742 contra 0,705) e em +0,025 de F1. O recall é maior (0,885 contra 0,783), com precisão um pouco menor (0,821 contra 0,876). Para a triagem, recall maior significa menos clareiras perdidas e, portanto, menos falsos "volume sem lastro".
+
+**Comparabilidade.** Esses números **não são comparáveis** com a tabela do detector operacional (blocos de 5 km, 5 folds, 65.500 px). A comparação justa é sempre dentro de cada protocolo.
+
+**Status.** O Prithvi-EO-2.0 foi tentado e caiu no fallback por incompatibilidade de versão TerraTorch/TorchGeo no Colab. Os pesos da U-Net não foram exportados, então o **modelo operacional continua sendo o LightGBM local**. Próximo passo: exportar os pesos e usar a U-Net no pipeline, revalidando no protocolo local.
+
+![Exemplo de teste espacial da U-Net siamesa: pré, pós, rótulo INPE (vazio = ignorado) e probabilidade](img/dl_exemplo_1.png)
+
+Outros exemplos: [2](img/dl_exemplo_2.png) · [3](img/dl_exemplo_3.png) · [4](img/dl_exemplo_4.png). No exemplo 3, a U-Net marca probabilidade alta em parte da área de floresta estável (rótulo negativo) no canto inferior, um tipo de falso positivo a acompanhar.
 
 ### Limitações do detector
 - **Rótulos fracos.** DETER (~3 ha de área mínima) e PRODES (6,25 ha) não captam todas as pequenas clareiras de manejo seletivo. Ausência de rótulo não garante floresta intacta.
@@ -97,30 +105,32 @@ Fonte: `lastro_dl_resultados.zip` → `metrics_dl.json`.
 
 ### Métricas
 
-Execução de 2026-11-06 (`uv run python -m pipeline.volume.calibrar`). Fontes: `data/artifacts/metrics/calibracao.json` e `data/processed/volume/metricas_cv.json`. São **72 UPAs e 17.193 células** válidas, todas avaliadas fora da amostra.
+Execução de 2026-11-06T07:30Z (`uv run python -m pipeline.volume.calibrar`). Fontes: `data/artifacts/metrics/calibracao.json` e `data/processed/volume/metricas_cv.json`. São **72 UPAs e 17.193 células** válidas, todas avaliadas fora da amostra.
 
 | Nível | Métrica | Antes do conformal | Depois do conformal |
 |---|---|---|---|
-| Célula (1 ha) | R² (p50) | −0,01 | −0,01 |
-| Célula (1 ha) | MAE (p50) | 11,6 m³/ha | 11,6 m³/ha |
-| Célula (1 ha) | Largura média do intervalo p10–p90 | 30,8 m³/ha | 32,7 m³/ha |
-| Célula (1 ha) | **Cobertura empírica p10–p90** (nominal 80%) | **79,0%** | **83,5%** |
-| UPA (soma simples dos quantis) | Cobertura p10–p90 / R² / erro relativo mediano | 95,8% / 0,53 / 51% | n/a |
-| UPA (Monte Carlo, fator comum) | R² (p50) | 0,29 | 0,13 |
-| UPA (Monte Carlo, fator comum) | Erro relativo mediano | 34% | 32% |
+| Célula (1 ha) | R² (p50) | 0,07 | 0,07 |
+| Célula (1 ha) | MAE (p50) | 11,1 m³/ha | 11,1 m³/ha |
+| Célula (1 ha) | Largura média do intervalo p10–p90 | 29,8 m³/ha | 32,4 m³/ha |
+| Célula (1 ha) | **Cobertura empírica p10–p90** (nominal 80%) | **78,8%** | **84,2%** |
+| Bloco 3×3 (9 ha, Monte Carlo, σ_bloco = 0,9) | Cobertura p10–p90 | 66,5% | n/a |
+| UPA (soma simples dos quantis) | Cobertura p10–p90 / R² / erro relativo mediano | 93,1% / 0,55 / 42% | n/a |
+| UPA (Monte Carlo, fator comum) | R² (p50) | 0,33 | 0,06 |
+| UPA (Monte Carlo, fator comum) | Erro relativo mediano | 32% | 29% |
 | UPA (Monte Carlo, fator comum) | **Cobertura empírica p10–p90** (nominal 80%) | **87,5%** | **88,9%** |
-| — | Ajuste conformal $\hat Q$ por fold | n/a | 0; 0,08; 0,10; 9,39 m³/ha (final: 0,04) |
-| — | σ_upa (dispersão log por UPA) | 0,65 | n/a |
+| — | Ajuste conformal $\hat Q$ por fold | n/a | 0; 0,75; 11,86 m³/ha (final ≈ 0) |
+| — | σ_upa (dispersão log por UPA) | 0,64 | n/a |
+| — | Taxa de disparo de A nas 72 UPAs de calibração | 6,9% | n/a |
 
 **Como ler.**
-- **O intervalo está calibrado.** Em UPAs que o modelo não viu, o volume declarado caiu dentro de p10–p90 em 79% das células antes do conformal e em 83,5% depois, contra 80% nominais. No total da UPA, a cobertura foi de 87,5% a 88,9%, um pouco conservadora. Isso favorece o titular: menos indícios A.
-- **O ponto central não é informativo por célula.** O R² da célula é cerca de zero. Numa célula de 1 ha, a imagem quase não prevê *quanto* foi declarado, por causa do erro de GPS, da clareira sub-pixel e da variação de volume por árvore. No total da UPA, o R² sobe para 0,29 a 0,53, com erro relativo mediano de cerca de 34%.
-- **Consequência para as regras.** O Lastro nunca usa a mediana (p50) para abrir indício. A assinatura A exige que o declarado da UPA supere o **p90** do Monte Carlo **e** que a divergência esteja concentrada em células. Resultado de A nos casos com imagem: [a preencher após regeneração do index].
-
+- **O intervalo está calibrado** por célula e por UPA. Em UPAs que o modelo não viu, o volume declarado caiu dentro de p10–p90 em 78,8% das células antes do conformal e em 84,2% depois, contra 80% nominais. No total da UPA, a cobertura foi de 87,5% a 88,9%, um pouco conservadora. Isso favorece o titular: menos indícios A.
+- **Em blocos de 9 ha a cobertura fica em 66,5%**, abaixo do nominal mesmo com σ_bloco = 0,9, que foi o maior valor testado. Por isso o limiar de A nos blocos não se apoia só no p90: ele é calibrado empiricamente como o p95 da fração de excesso nas UPAs sem indício (10%). Com esse limiar, A dispara em 6,9% das UPAs de calibração.
+- **O ponto central não é informativo por célula.** O R² da célula é cerca de 0,07. Numa célula de 1 ha, a imagem quase não prevê *quanto* foi declarado, por causa do erro de GPS, da clareira sub-pixel e da variação de volume por árvore. No total da UPA, o R² fica entre 0,3 e 0,55, com erro relativo mediano de cerca de 30%.
+- **Consequência para as regras.** O Lastro nunca usa a mediana (p50) para abrir indício (ver METODO §3). No index de 06/11 (07:33Z), A ficou **sem indício** nos 3 POA com imagem: nenhum bloco de 9 ha passou do p90 com excesso relevante, e o total declarado de cada UPA cabe no intervalo da imagem.
 ### Limitações da calibração
 - **Possível contaminação.** As UPAs "limpas" não têm indício documental nem DETER, mas podem conter divergência não detectada. Se o declarado estiver inflado nelas, a relação declarado/distúrbio aprendida fica inflada, e o Lastro **subestima** o indício A. O viés é conservador para o titular, mas existe.
-- **Baixa informação por célula.** O R² da célula é cerca de 0, então o modelo serve para dar **faixas** e totais por UPA, não para estimar o volume de uma célula específica.
-- **Ajuste conformal instável entre folds.** $\hat Q$ variou de 0 a 9,4 m³/ha, porque depende de quais UPAs caem na calibração. Com mais UPAs, deve estabilizar.
+- **Baixa informação por célula.** O R² da célula é cerca de 0,07, então o modelo serve para dar **faixas** e totais por UPA, não para estimar o volume de uma célula específica.
+- **Ajuste conformal instável entre folds.** $\hat Q$ variou de 0 a 11,9 m³/ha, porque depende de quais UPAs caem na calibração. Com mais UPAs, deve estabilizar.
 - **Clareira que fecha.** A clareira de uma árvore isolada (200–600 m²) é sub-pixel a 10 m e se fecha em meses. Uma imagem pós tardia mostra menos distúrbio do que houve.
 - **Nuvem.** Células com menos de 70% de pixels válidos são descartadas no treino e marcadas como `nao_observavel` na inferência.
 - **GPS.** O erro de dezenas de metros nas coordenadas IF100 espalha volume entre células vizinhas.
@@ -154,7 +164,7 @@ Execução de 2026-11-06 (`uv run python -m pipeline.volume.calibrar`). Fontes: 
 | Autorizações vizinhas | Distúrbio de terceiro atribuído ao titular | AOI menos polígonos de outras autorizações; B exclui área coberta por outra autorização |
 | Amostra do detector enviesada para alertas | Métricas não representam o polo inteiro | Declarado no protocolo |
 | UC/TI/embargo não integrados | F6 não avaliado | `nao_avaliado` explícito |
-| Sazonalidade do par pré/pós | A janela pós segue a data da última exploração e pode cair fora da estação seca. Com o pré em jun–set, pasto e áreas já abertas podem aparecer como "mudança" no buffer | Uma execução preliminar produziu áreas B implausíveis, de centenas a milhares de ha fora da UPA. Correção encaminhada ao pipeline: máscara de floresta no pré, janelas sazonais comparáveis, área mínima e sanity check. Efeito após a correção: [a preencher] |
+| Sazonalidade do par pré/pós | A janela pós segue a data da última exploração e pode cair fora da estação seca. Com o pré em jun–set, pasto e áreas já abertas podem aparecer como "mudança" no buffer | Uma execução preliminar produziu áreas B implausíveis, de centenas a milhares de ha fora da UPA. Correção aplicada: máscara de floresta no pré, janelas sazonais comparáveis, polígono ≥ 0,5 ha, prob ≥ 0,6 e sanity check (área fora > 3× a autorizada ou > 30% do buffer → inconclusivo). Nos POA, B caiu para 35–398 ha fora da UPA. **Pendente:** em 2 casos de corte raso (ASV/UAS) com área "fora" de 9× a autorizada ou mais, o sanity check ainda não se aplica, e B e F2 aparecem como indício. Tratar como artefato até verificação visual |
 
 ## 5. Considerações éticas e jurídicas
 

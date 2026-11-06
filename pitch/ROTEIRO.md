@@ -13,8 +13,8 @@
 | 5 | Método | 0:35 | 2:10 |
 | 6 | Demo ao vivo | 1:20 | 3:30 |
 | 7 | Resultados | 0:30 | 4:00 |
-| 8 | Confiabilidade | 0:25 | 4:25 |
-| 9 | Limites | 0:20 | 4:45 |
+| 8 | Confiabilidade | 0:30 | 4:30 |
+| 9 | Limites | 0:15 | 4:45 |
 | 10 | Impacto | 0:15 | 5:00 |
 
 ---
@@ -55,10 +55,10 @@
 ### 7. Resultados (0:30)
 "No polo inteiro: 1.142 autorizações avaliadas, 46 com algum indício documental (11 com árvore fora do polígono, 10 acima do autorizado, 29 fora da validade) e 1,87 milhão de metros cúbicos declarados confrontados. Os números AUTEX estão mascarados no slide. No app eles são públicos, sem nome nem CNPJ."
 
-### 8. Confiabilidade (0:25)
-"Tudo foi medido em áreas que o modelo não viu. O detector dobra o IoU do baseline: 0,56 contra 0,28. E o intervalo de volume cobre o declarado em 83% das células para 80% esperados. Ou seja, quando dizemos p10 a p90, a faixa vale. O ponto central por célula é fraco, por isso nunca decidimos pela mediana."
+### 8. Confiabilidade (0:30)
+"Tudo foi medido em áreas que o modelo não viu. O detector dobra o IoU do baseline: 0,56 contra 0,28. No Colab, nos mesmos pixels, uma U-Net siamesa superou o LightGBM em 0,037 de IoU (0,74 contra 0,70). O próximo passo é exportar os pesos e colocá-la no pipeline. E o intervalo de volume cobre o declarado em 83% das células para 80% esperados. Ou seja, quando dizemos p10 a p90, a faixa vale. O ponto central por célula é fraco, por isso nunca decidimos pela mediana."
 
-### 9. Limites (0:20)
+### 9. Limites (0:15)
 "É triagem, não acusação. A clareira de uma árvore fecha em meses; nuvem não vira prova de ausência; dado faltante vira 'não avaliado'. Cada indício mostra regra, limiar e fonte para revisão humana."
 
 ### 10. Impacto (0:15)

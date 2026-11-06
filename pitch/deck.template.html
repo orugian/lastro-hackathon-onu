@@ -98,12 +98,16 @@ table.top td.sc{font-family:Georgia,serif;font-size:36px;color:var(--forest);tex
 .fl{display:inline-block;background:var(--forest);color:var(--lime);border-radius:6px;padding:0 10px;margin-right:6px;font-size:24px;font-weight:600}
 .sim{font-size:24px;border:2px solid #b8860b;color:#8a6508;border-radius:6px;padding:0 8px;margin-left:8px}
 /* confiabilidade */
-.bars{display:flex;flex-direction:column;gap:22px;margin-top:24px}
+.bars{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 .brow{display:grid;grid-template-columns:250px 1fr 110px;align-items:center;gap:20px;font-size:28px}
-.track{height:46px;background:#e3e7d6;border-radius:8px;overflow:hidden}
+.track{height:32px;background:#e3e7d6;border-radius:8px;overflow:hidden}
 .track i{display:block;height:100%;background:var(--forest)}
 .track i.base{background:#9aa894}
-.brow .v{font-family:Georgia,serif;font-size:36px;text-align:right}
+.brow .v{font-family:Georgia,serif;font-size:32px;text-align:right}
+.dl{margin-top:20px;border-top:2px solid var(--forest);padding-top:14px}
+.dl p{font-size:24px;line-height:1.32}
+.dl img{display:block;width:100%;margin-top:10px;border-radius:8px;border:1px solid var(--line)}
+.dl span{display:block;font-size:20px;color:var(--muted);margin-top:6px;line-height:1.25}
 .gauge{background:var(--forest);color:var(--paper);border-radius:18px;padding:44px 48px;display:flex;flex-direction:column;height:100%}
 .gauge .big{font-size:150px;color:var(--lime)}
 .gtrack{position:relative;height:40px;background:#2e5443;border-radius:8px;margin:34px 0 14px}
@@ -232,7 +236,7 @@ body:hover #hint{opacity:.8}
       <span class="chip"><b>F2</b>corte raso além da área</span>
       <span class="chip"><b>F6</b>UC / TI / embargo</span>
     </div>
-    <p class="rule">A assinatura A só abre quando o declarado supera o <b>p90</b> estimado para a UPA <b>e</b> a divergência está concentrada (≥ 5 células contíguas ou ≥ 10% do volume).</p>
+    <p class="rule">A assinatura A só abre quando o declarado supera o <b>p90</b> da UPA, ou quando o excesso em blocos de 9 ha passa de <b>10%</b> do declarado (limiar calibrado nas UPAs sem indício). Nunca por árvore.</p>
   </div>
   <footer class="src"><span>Regras e limiares: pipeline/rules/flags.py · fórmulas em docs/METODO.md</span><span class="n">5 / 10</span></footer>
 </section>
@@ -249,7 +253,7 @@ body:hover #hint{opacity:.8}
     <div class="col">
       <ol class="path">
         <li><b>Triagem</b><span>fila do polo ordenada por prioridade, com filtros por UF, tipo e indício</span></li>
-        <li><b>Dossiê</b><span>antes e depois (Sentinel-2 e CBERS-4A), células, árvores; cada evidência acende no mapa</span></li>
+        <li><b>Dossiê</b><span>antes e depois no Sentinel-2, células e árvores; cada evidência acende no mapa</span></li>
         <li><b>Confiabilidade</b><span>métricas fora da amostra e cobertura do intervalo</span></li>
       </ol>
     </div>
@@ -280,14 +284,17 @@ body:hover #hint{opacity:.8}
   <div class="body">
     <div class="col" style="flex:1.2">
       <h3>Detector de distúrbio</h3>
-      <p class="muted" style="font-size:26px;margin-top:8px">GroupKFold espacial, blocos de 5 km, {{DET_NPX}} pixels fora da amostra</p>
+      <p class="muted" style="font-size:24px;margin-top:4px">Operacional: GroupKFold espacial, blocos de 5 km, {{DET_NPX}} px fora da amostra</p>
       <div class="bars">
         <div class="brow"><span>IoU LightGBM</span><span class="track"><i style="width:{{DET_IOU_W}}%"></i></span><span class="v">{{DET_IOU}}</span></div>
         <div class="brow"><span>IoU baseline</span><span class="track"><i class="base" style="width:{{BAS_IOU_W}}%"></i></span><span class="v">{{BAS_IOU}}</span></div>
-        <div class="brow"><span>F1 LightGBM</span><span class="track"><i style="width:{{DET_F1_W}}%"></i></span><span class="v">{{DET_F1}}</span></div>
-        <div class="brow"><span>F1 baseline</span><span class="track"><i class="base" style="width:{{BAS_F1_W}}%"></i></span><span class="v">{{BAS_F1}}</span></div>
       </div>
-      <p style="font-size:28px;margin-top:30px">Por tipo (F1): corte raso <b>{{F1_RASO}}</b> · seletivo e degradação <b>{{F1_SEL}}</b>. O corte seletivo é o mais difícil; por isso a decisão é por célula e por UPA, não por pixel.</p>
+      <p style="font-size:25px;margin-top:14px">F1 <b>{{DET_F1}}</b> × {{BAS_F1}} · por tipo: corte raso <b>{{F1_RASO}}</b>, seletivo/degradação <b>{{F1_SEL}}</b></p>
+      <div class="dl">
+        <p><b>Deep learning (Colab):</b> U-Net siamesa IoU <b>{{DL_IOU}}</b> × LightGBM {{DL_LGB_IOU}} × Otsu {{DL_OTSU_IOU}} nos mesmos {{DL_NPX}} px (blocos de 25 km). Ganho de +{{DL_GAIN}} de IoU sobre o LightGBM. Próximo passo: exportar os pesos e usar no pipeline.</p>
+        {{IMG_DL}}
+        <span>pré · pós · rótulo INPE · probabilidade da U-Net (teste espacial). Protocolos de 5 km e 25 km não são comparáveis entre si.</span>
+      </div>
     </div>
     <div class="col">
       <div class="gauge">
@@ -342,7 +349,7 @@ body:hover #hint{opacity:.8}
       <li><b class="lime">Inventário 100% em campo</b>: parceria para verdade de campo e recalibração</li>
     </ul>
     <ul class="clean">
-      <li><b class="lime">Deep learning</b>: U-Net siamesa treinada no Colab (IoU {{DL_IOU}} em protocolo próprio), a integrar após validação comparável</li>
+      <li><b class="lime">Deep learning</b>: a U-Net siamesa do Colab supera o LightGBM nos mesmos pixels (IoU {{DL_IOU}} × {{DL_LGB_IOU}}); exportar os pesos e usar no pipeline</li>
       <li><b class="lime">DOF Transportes</b>: confrontar volume transportado com o estimado</li>
       <li><b class="lime">Escala</b>: o método não depende do polo; o próximo passo é a Amazônia Legal</li>
     </ul>

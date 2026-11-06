@@ -80,6 +80,13 @@ await page.goto(`${base}/#/confiabilidade`);
 await page.waitForSelector(".rel-card, .state", { timeout: 20000 });
 await settle(800);
 await shot("06-confiabilidade");
+const dl = await page.$(".dl-card");
+if (dl) {
+  await dl.scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollTo(0, document.querySelector(".dl-card").getBoundingClientRect().top + window.scrollY - 70));
+  await page.waitForTimeout(400);
+  await shot("06b-confiabilidade-dl");
+}
 await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 await page.waitForTimeout(300);
 await shot("07-confiabilidade-fim");

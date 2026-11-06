@@ -4,9 +4,9 @@
  "seed": 0,
  "celula": "CDF linear por partes pelos quantis (0,1;p10),(0,5;p50),(0,9;p90) do LightGBM quantílico + CQR; caudas extrapoladas linearmente, truncadas em 0",
  "correlacao_espacial": "fator comum por UPA ~ lognormal(0, sigma_upa) multiplicando todas as células",
- "sigma_upa": 0.6475353813679239,
+ "sigma_upa": 0.6439152437199234,
  "sigma_upa_origem": "desvio-padrão de log((declarado+1)/(p50 estimado+1)) por UPA, fora da amostra",
- "conformal_q_m3_ha": 0.03856207481172665,
+ "conformal_q_m3_ha": 0.0,
  "subconjuntos": {
   "sem_lastro_excesso": "Σ(vol_declarado − vol amostrado) nas células sem_lastro",
   "nao_declarado": "Σ vol amostrado nas células nao_declarado"
@@ -21,45 +21,69 @@
  },
  "metricas_cv": {
   "celula_antes": {
-   "r2": -0.012507401487981573,
-   "mae_m3_ha": 11.588901134746349,
-   "cobertura_p10_p90": 0.7898563368812889,
-   "largura_media_m3_ha": 30.755335989597853
+   "r2": 0.06966720646399949,
+   "mae_m3_ha": 11.108984151750914,
+   "cobertura_p10_p90": 0.7879369510847438,
+   "largura_media_m3_ha": 29.816412308192685
   },
   "celula_conformal": {
-   "r2": -0.012507401487981573,
-   "mae_m3_ha": 11.588901134746349,
-   "cobertura_p10_p90": 0.8345838422613855,
-   "largura_media_m3_ha": 32.69191216957392
+   "r2": 0.06966720646399949,
+   "mae_m3_ha": 11.108984151750914,
+   "cobertura_p10_p90": 0.8419124062118304,
+   "largura_media_m3_ha": 32.40060689613757
   },
   "upa_soma_quantis_antes": {
-   "r2": 0.5346131814286857,
-   "mae_m3": 1495.0219379208445,
-   "erro_rel_mediano": 0.5117077434542259,
-   "cobertura_p10_p90": 0.9583333333333334,
+   "r2": 0.5476259829740349,
+   "mae_m3": 1374.6959549210396,
+   "erro_rel_mediano": 0.42306375817570996,
+   "cobertura_p10_p90": 0.9305555555555556,
    "n_upas": 72
   },
   "upa_mc_antes": {
-   "r2": 0.2878467988809744,
-   "mae_m3": 1551.1000629517885,
-   "erro_rel_mediano": 0.3384097649553044,
+   "r2": 0.32507586586328974,
+   "mae_m3": 1380.6091377232394,
+   "erro_rel_mediano": 0.31508516826641547,
    "cobertura_p10_p90": 0.875,
    "n_upas": 72
   },
   "upa_mc_conformal": {
-   "r2": 0.1266105585775118,
-   "mae_m3": 1616.0194587190838,
-   "erro_rel_mediano": 0.32239974749842154,
+   "r2": 0.05638611985515685,
+   "mae_m3": 1477.8353261923573,
+   "erro_rel_mediano": 0.2948115821125723,
    "cobertura_p10_p90": 0.8888888888888888,
    "n_upas": 72
   },
-  "sigma_upa": 0.6475353813679239,
+  "sigma_upa": 0.6439152437199234,
   "q_conformal_folds_m3_ha": [
    0.0,
-   0.075,
-   0.099,
-   9.392
-  ]
+   0.747,
+   11.863
+  ],
+  "sigma_bloco": 0.9,
+  "cobertura_bloco": 0.6652310101801097,
+  "cobertura_bloco_grid": {
+   "0.0": 0.3899765074393109,
+   "0.2": 0.4338292873923258,
+   "0.35": 0.5031323414252153,
+   "0.5": 0.5704776820673454,
+   "0.7": 0.62451057165231,
+   "0.9": 0.6652310101801097
+  },
+  "n_blocos": 2554,
+  "frac_blocos_sem_lastro": 0.05129209083790133,
+  "a_frac_excesso_min": 0.1,
+  "a_frac_excesso_dist": {
+   "count": 72.0,
+   "mean": 0.017,
+   "std": 0.056,
+   "min": 0.0,
+   "25%": 0.0,
+   "50%": 0.0,
+   "75%": 0.002,
+   "max": 0.367
+  },
+  "a_taxa_disparo_upas_limpas": 0.06944444444444445,
+  "a_taxa_disparo_so_upa": 0.06944444444444445
  },
- "gerado_em": "2026-11-06T03:54:10+00:00"
+ "gerado_em": "2026-11-06T07:30:32+00:00"
 }

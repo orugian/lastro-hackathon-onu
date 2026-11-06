@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import type { MetricaModelo, MetricsCalibracao, MetricsDetector } from "./types";
 import { fmt, pct, staticMode, useData } from "./data";
 import { CalibrationChart, CoverageBar } from "./Charts";
@@ -73,27 +73,53 @@ function Matrix({ m }: { m: number[][] }) {
   );
 }
 
-function Detector({ d }: { d: MetricsDetector }) {
-  const [sel, setSel] = useState(d.selecionado);
-  const model = d.modelos.find((m) => m.nome === sel) ?? d.modelos[0];
-  const { text, strata } = splitObs(model?.obs ?? null);
-  const best = (k: "iou" | "f1" | "precisao" | "recall") => Math.max(...d.modelos.map((m) => m[k] ?? -1));
+const METRICS = ["iou", "f1", "precisao", "recall"] as const;
+const isColab = (m: MetricaModelo) => /^\[colab\]/i.test(m.nome);
+const shortName = (n: string) => n.replace(/^\[colab\]\s*/i, "");
+
+function ModelTable({ models, selected, inUse, onSelect }: { models: MetricaModelo[]; selected?: string; inUse?: string; onSelect: (n: string) => void }) {
+  const best = (k: (typeof METRICS)[number]) => Math.max(...models.map((m) => m[k] ?? -1));
   return (
-    <section className="rel-card">
-      <header>
-        <h2>Detector de distúrbio florestal</h2>
-        <p>Classifica cada pixel Sentinel-2 entre floresta estável e distúrbio (corte raso, corte seletivo, degradação) entre as datas antes e depois.</p>
-      </header>
-      <div className="protocol">
-        <span>Protocolo</span>
-        <p>{d.protocolo}</p>
-        <span>Rótulos de referência</span>
-        <p>{d.rotulos}</p>
-      </div>
-      <table className="models">
+    <table className="models">
+      <thead>
+        <tr>
+          <th>Modelo</th>
+          <th>IoU</th>
+          <th>F1</th>
+          <th>Precisão</th>
+          <th>Recall</th>
+        </tr>
+      </thead>
+      <tbody>
+        {models.map((m) => (
+          <tr key={m.nome} className={m.nome === selected ? "on" : ""} onClick={() => onSelect(m.nome)}>
+            <td>
+              <button type="button" className="radio" aria-pressed={m.nome === selected} onClick={() => onSelect(m.nome)}>
+                <i />
+                {shortName(m.nome)}
+              </button>
+              {m.nome === inUse && <span className="tag">em uso</span>}
+            </td>
+            {METRICS.map((k) => (
+              <td key={k} className={m[k] != null && m[k] === best(k) && models.length > 1 ? "best" : ""}>
+                {pct(m[k], 1)}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function Strata({ strata, name }: { strata: Strat; name?: string }) {
+  return (
+    <>
+      <h3>Desempenho por tipo de distúrbio · {name}</h3>
+      <table className="models compact">
         <thead>
           <tr>
-            <th>Modelo</th>
+            <th>Estrato</th>
             <th>IoU</th>
             <th>F1</th>
             <th>Precisão</th>
@@ -101,54 +127,56 @@ function Detector({ d }: { d: MetricsDetector }) {
           </tr>
         </thead>
         <tbody>
-          {d.modelos.map((m) => (
-            <tr key={m.nome} className={m.nome === model?.nome ? "on" : ""} onClick={() => setSel(m.nome)}>
-              <td>
-                <button type="button" className="radio" aria-pressed={m.nome === model?.nome} onClick={() => setSel(m.nome)}>
-                  <i />
-                  {m.nome}
-                </button>
-                {m.nome === d.selecionado && <span className="tag">em uso</span>}
-              </td>
-              {(["iou", "f1", "precisao", "recall"] as const).map((k) => (
-                <td key={k} className={m[k] != null && m[k] === best(k) && d.modelos.length > 1 ? "best" : ""}>
-                  {pct(m[k])}
-                </td>
-              ))}
+          {Object.entries(strata).map(([k, v]) => (
+            <tr key={k}>
+              <td>{stratumLabel[k] ?? k.replaceAll("_", " ")}</td>
+              <td>{pct(v.iou)}</td>
+              <td>{pct(v.f1)}</td>
+              <td>{pct(v.precisao)}</td>
+              <td>{pct(v.recall)}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="muted small">Clique em um modelo para ver a matriz de confusão. Negrito: melhor valor da coluna.</p>
-      <h3>Matriz de confusão · {model?.nome}</h3>
-      {model?.matriz_confusao ? <Matrix m={model.matriz_confusao} /> : <p className="muted">Matriz não avaliada para este modelo.</p>}
-      {strata && (
+    </>
+  );
+}
+
+function Detector({ d }: { d: MetricsDetector }) {
+  const local = d.modelos.filter((m) => !isColab(m));
+  const [sel, setSel] = useState(d.selecionado);
+  const model = local.find((m) => m.nome === sel) ?? local[0];
+  const { text, strata } = splitObs(model?.obs ?? null);
+  const [protoLocal] = d.protocolo.split(" | ");
+  return (
+    <section className="rel-card">
+      <header>
+        <h2>Detector de distúrbio florestal</h2>
+        <p>Classifica cada pixel Sentinel-2 entre floresta estável e distúrbio (corte raso, corte seletivo, degradação) entre as datas antes e depois.</p>
+      </header>
+      <div className="group-title">
+        <h3>Protocolo local (operacional)</h3>
+        <span>modelo que gera os dossiês</span>
+      </div>
+      <div className="protocol">
+        <span>Protocolo</span>
+        <p>{protoLocal}</p>
+        <span>Rótulos de referência</span>
+        <p>{d.rotulos}</p>
+      </div>
+      {local.length ? (
+        <ModelTable models={local} selected={model?.nome} inUse={d.selecionado} onSelect={setSel} />
+      ) : (
+        <p className="muted">Nenhum modelo avaliado neste protocolo.</p>
+      )}
+      <p className="muted small">Clique em um modelo para ver a matriz de confusão. Negrito: melhor valor da coluna. Compare apenas modelos do mesmo grupo.</p>
+      {model && (
         <>
-          <h3>Desempenho por tipo de distúrbio · {model?.nome}</h3>
-          <table className="models compact">
-            <thead>
-              <tr>
-                <th>Estrato</th>
-                <th>IoU</th>
-                <th>F1</th>
-                <th>Precisão</th>
-                <th>Recall</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(strata).map(([k, v]) => (
-                <tr key={k}>
-                  <td>{stratumLabel[k] ?? k.replaceAll("_", " ")}</td>
-                  <td>{pct(v.iou)}</td>
-                  <td>{pct(v.f1)}</td>
-                  <td>{pct(v.precisao)}</td>
-                  <td>{pct(v.recall)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <h3>Matriz de confusão · {shortName(model.nome)}</h3>
+          {model.matriz_confusao ? <Matrix m={model.matriz_confusao} /> : <p className="muted">Matriz não avaliada para este modelo.</p>}
         </>
       )}
+      {strata && <Strata strata={strata} name={model?.nome} />}
       {text && (
         <div className="obs">
           <Icon name="info" size={15} />
@@ -159,6 +187,170 @@ function Detector({ d }: { d: MetricsDetector }) {
   );
 }
 
+type DlJson = {
+  metricas?: { protocolo?: string; obs?: string[] | string };
+  config?: { gpu?: string; epocas_executadas?: number; n_chips?: number; chip_px?: number; bloco_m?: number; treino?: { epoch: number; train: number; val: number }[] };
+};
+
+function useDl() {
+  const [dl, setDl] = useState<DlJson | null>(null);
+  useEffect(() => {
+    let on = true;
+    (async () => {
+      for (const u of ["/api/metrics/dl", "/dl/dl.json"]) {
+        try {
+          const r = await fetch(u);
+          if (r.ok && (r.headers.get("content-type") ?? "").includes("json")) {
+            const j = (await r.json()) as DlJson;
+            if (on) setDl(j);
+            return;
+          }
+        } catch {
+          /* tenta a próxima fonte */
+        }
+      }
+    })();
+    return () => {
+      on = false;
+    };
+  }, []);
+  return dl;
+}
+
+function LossChart({ pts }: { pts: { epoch: number; train: number; val: number }[] }) {
+  const W = 620,
+    H = 210,
+    L = 36,
+    R = 10,
+    T = 12,
+    B = 30;
+  const maxE = Math.max(...pts.map((p) => p.epoch));
+  const minE = Math.min(...pts.map((p) => p.epoch));
+  const maxY = Math.ceil(Math.max(...pts.flatMap((p) => [p.train, p.val])) * 10) / 10;
+  const x = (e: number) => L + ((e - minE) / Math.max(1, maxE - minE)) * (W - L - R);
+  const y = (v: number) => T + (1 - v / maxY) * (H - T - B);
+  const line = (k: "train" | "val") => pts.map((p, i) => `${i ? "L" : "M"}${x(p.epoch).toFixed(1)},${y(p[k]).toFixed(1)}`).join(" ");
+  const bestVal = pts.reduce((a, b) => (b.val < a.val ? b : a));
+  return (
+    <svg className="losschart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Curva de perda por época, treino e validação">
+      {[0, 0.5, 1].map((f) => (
+        <g key={f}>
+          <line x1={L} x2={W - R} y1={y(maxY * f)} y2={y(maxY * f)} stroke="#e4e8dc" />
+          <text x={L - 6} y={y(maxY * f) + 4} textAnchor="end" className="axis">
+            {(maxY * f).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
+          </text>
+        </g>
+      ))}
+      {pts.map((p) => (
+        <text key={p.epoch} x={x(p.epoch)} y={H - 12} textAnchor="middle" className="axis">
+          {p.epoch}
+        </text>
+      ))}
+      <path d={line("train")} fill="none" stroke="#9db58f" strokeWidth={2} strokeDasharray="5 3" />
+      <path d={line("val")} fill="none" stroke="#173a2c" strokeWidth={2.5} />
+      <circle cx={x(bestVal.epoch)} cy={y(bestVal.val)} r={4.5} fill="#c5f67c" stroke="#173a2c" strokeWidth={2} />
+      <text x={W - R} y={H} textAnchor="end" className="axis">
+        época
+      </text>
+    </svg>
+  );
+}
+
+function DeepLearning({ d }: { d: MetricsDetector }) {
+  const colab = d.modelos.filter(isColab);
+  const dl = useDl();
+  const [sel, setSel] = useState(() => colab.reduce((a, b) => ((b.iou ?? 0) > (a.iou ?? 0) ? b : a), colab[0])?.nome);
+  const [ex, setEx] = useState(1);
+  if (!colab.length) return null;
+  const model = colab.find((m) => m.nome === sel) ?? colab[0];
+  const unet = colab.find((m) => /u-?net/i.test(m.nome));
+  const lgbm = colab.find((m) => /lightgbm/i.test(m.nome));
+  const proto = d.protocolo.split(" | ")[1] ?? dl?.metricas?.protocolo ?? "";
+  const cfg = dl?.config;
+  const curve = cfg?.treino ?? [];
+  const obsFirst = (model?.obs ?? "").split(/(?<=\.)\s/)[0];
+  return (
+    <section className="rel-card dl-card">
+      <header className="dl-head">
+        <div>
+          <h2>Experimento deep learning (Colab, GPU)</h2>
+          <p>Segundo protocolo, independente: U-Net siamesa comparada ao LightGBM e a um baseline sem treino nos mesmos pixels de teste espacial (blocos de 25 km).</p>
+        </div>
+        <span className="exp-tag">experimental · não usado nos dossiês</span>
+      </header>
+      {unet && lgbm && unet.iou != null && lgbm.iou != null && (
+        <div className="dl-highlight">
+          <div className="dl-vs">
+            <div>
+              <b>{unet.iou.toLocaleString("pt-BR", { maximumFractionDigits: 3, minimumFractionDigits: 3 })}</b>
+              <span>IoU · {shortName(unet.nome)}</span>
+            </div>
+            <i aria-hidden="true">vs</i>
+            <div className="dim">
+              <b>{lgbm.iou.toLocaleString("pt-BR", { maximumFractionDigits: 3, minimumFractionDigits: 3 })}</b>
+              <span>IoU · {shortName(lgbm.nome)}</span>
+            </div>
+          </div>
+          <p>
+            Nos <b>mesmos {fmt(unet.n_pixels_teste, 0)} pixels</b> de teste, a U-Net supera o LightGBM em IoU por {fmt((unet.iou - lgbm.iou) * 100)} pontos percentuais
+            {unet.recall != null && lgbm.recall != null && <> e encontra mais distúrbio (recall {pct(unet.recall)} contra {pct(lgbm.recall)})</>}. O detector operacional segue sendo o LightGBM, mais barato e reprodutível sem GPU.
+          </p>
+        </div>
+      )}
+      <div className="dl-grid">
+        <div className="dl-col">
+          <div className="protocol">
+            <span>Protocolo</span>
+            <p>{proto}</p>
+          </div>
+          <ModelTable models={colab} selected={model?.nome} onSelect={setSel} />
+          <p className="muted small">Números comparáveis apenas dentro deste grupo; o protocolo local usa outros pixels e blocos de 5 km.</p>
+          {model?.matriz_confusao && (
+            <>
+              <h3>Matriz de confusão · {shortName(model.nome)}</h3>
+              <Matrix m={model.matriz_confusao} />
+            </>
+          )}
+        </div>
+        <div className="dl-col">
+          <figure className="dl-example">
+            <img src={`/dl/dl_exemplo_${ex}.png`} alt={`Exemplo ${ex} do teste espacial: imagem pré, pós, rótulo de referência e probabilidade prevista pela U-Net`} loading="lazy" />
+            <figcaption>
+              <span>Exemplo do teste espacial: pré · pós · rótulo PRODES/DETER (branco = ignorado) · probabilidade prevista</span>
+              <span className="pager">
+                {[1, 2, 3, 4].map((i) => (
+                  <button key={i} type="button" className={i === ex ? "on" : ""} aria-label={`Exemplo ${i}`} aria-pressed={i === ex} onClick={() => setEx(i)}>
+                    {i}
+                  </button>
+                ))}
+              </span>
+            </figcaption>
+          </figure>
+          {curve.length > 1 && (
+            <div className="loss">
+              <div className="loss-head">
+                <h3>Perda por época</h3>
+                <span className="loss-key">
+                  <i className="k-val" /> validação <i className="k-train" /> treino
+                </span>
+              </div>
+              <LossChart pts={curve} />
+              <p className="muted small">
+                {cfg?.epocas_executadas ?? curve.length} épocas com parada antecipada · {fmt(cfg?.n_chips, 0)} chips de {cfg?.chip_px ?? "—"} px · GPU {cfg?.gpu ?? "—"}. Ponto lima: menor perda de validação.
+              </p>
+            </div>
+          )}
+          {obsFirst && (
+            <div className="obs">
+              <Icon name="info" size={15} />
+              <p>Rótulos fracos e amostragem enriquecida em positivos: as métricas medem concordância com PRODES/DETER, não prevalência regional.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
 function Calibration({ c }: { c: MetricsCalibracao }) {
   const cov = c.cobertura_p10_p90;
   const diff = cov != null ? cov - c.cobertura_nominal : null;
@@ -253,6 +445,7 @@ export function Reliability() {
           <Loading label="Carregando calibração…" />
         )}
       </div>
+      {det.data && <DeepLearning d={det.data} />}
       <div className="rel-text">
         <section>
           <h2>Como ler estes números</h2>

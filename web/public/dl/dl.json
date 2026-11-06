@@ -1,0 +1,128 @@
+{
+ "metricas": {
+  "nome": "unet-siamesa",
+  "iou": 0.7419805207579473,
+  "f1": 0.8518815358912356,
+  "precisao": 0.8209319658345151,
+  "recall": 0.8852561622322871,
+  "matriz_confusao": [
+   [
+    1139241,
+    135747
+   ],
+   [
+    80664,
+    622328
+   ]
+  ],
+  "n_pixels_teste": 1977980,
+  "obs": [
+   "Resultados experimentais: indícios para priorizar fiscalização; não constituem prova.",
+   "PRODES/DETER não captam todas as pequenas clareiras; ausência de rótulo não garante floresta intacta.",
+   "PRODES usa ano de monitoramento e DETER out/set; mediana jun/set pode diluir mudanças e não coincide exatamente com eventos.",
+   "Proxy B8 para NIR narrow HLS e resolução 10 m implicam mudança de domínio do Prithvi.",
+   "LightGBM abaixo é refeito nestes chips; métricas do detector local com 5 folds/5 km não são diretamente comparáveis.",
+   "Tempos de 30 min/2 h são metas, dependem da GPU, rede, WFS, GEE e quantidade de nuvens."
+  ],
+  "protocolo": "Blocos UTM SIRGAS2000 de 25 km, seed 42, 70/15/15 por bloco; todos os anos de um bloco no mesmo split; chips inteiros dentro do bloco; AOIs de demonstração excluídas. Métricas de pixel apenas no teste espacial. Pixels sem observação e negativos sem NDVI pré > 0,75 ou com histórico de alertas ignorados. DL limiar fixo 0,5; Otsu ajustado no treino; LightGBM limiar ajustado na validação. Matriz [[TN,FP],[FN,TP]]. Amostragem enriquecida em positivos, não estima prevalência regional.",
+  "baseline_mesmos_chips": {
+   "nome": "delta-NDVI + Otsu",
+   "threshold": 0.12442535161972046,
+   "iou": 0.4323121235925635,
+   "f1": 0.6036563071297989,
+   "precisao": 0.9431776277211203,
+   "recall": 0.4438727609987027,
+   "matriz_confusao": [
+    [
+     1256189,
+     18799
+    ],
+    [
+     390953,
+     312039
+    ]
+   ],
+   "n_pixels_teste": 1977980
+  },
+  "lightgbm_mesmos_chips": {
+   "nome": "lightgbm",
+   "threshold": 0.30000000000000004,
+   "iou": 0.7045461820649564,
+   "f1": 0.8266671674585439,
+   "precisao": 0.8758533856069325,
+   "recall": 0.782711609804948,
+   "matriz_confusao": [
+    [
+     1196995,
+     77993
+    ],
+    [
+     152752,
+     550240
+    ]
+   ],
+   "n_pixels_teste": 1977980
+  }
+ },
+ "config": {
+  "modelo": "unet-siamesa",
+  "gpu": "Tesla T4",
+  "epocas_executadas": 9,
+  "n_chips": 400,
+  "chip_px": 224,
+  "bloco_m": 25000,
+  "fallbacks": [
+   {
+    "model": "prithvi_eo_v2_100_tl",
+    "error": "ImportError: cannot import name 'utils' from 'torchgeo.trainers' (/usr/local/lib/python3.13/dist-packages/torchgeo/trainers/__init__.py)"
+   }
+  ],
+  "treino": [
+   {
+    "epoch": 1,
+    "train": 0.9153335551192477,
+    "val": 0.6034413109654966
+   },
+   {
+    "epoch": 2,
+    "train": 0.6061850723407277,
+    "val": 0.5011152750340061
+   },
+   {
+    "epoch": 3,
+    "train": 0.4623553990404268,
+    "val": 0.4749182393585426
+   },
+   {
+    "epoch": 4,
+    "train": 0.43914090856281734,
+    "val": 0.540706853935684
+   },
+   {
+    "epoch": 5,
+    "train": 0.36765513726121163,
+    "val": 0.5864707460437996
+   },
+   {
+    "epoch": 6,
+    "train": 0.33102503030692937,
+    "val": 0.4505319621251977
+   },
+   {
+    "epoch": 7,
+    "train": 0.314566130496533,
+    "val": 0.4585695815259132
+   },
+   {
+    "epoch": 8,
+    "train": 0.27478596853570464,
+    "val": 0.5144294699033102
+   },
+   {
+    "epoch": 9,
+    "train": 0.2509930902285594,
+    "val": 0.45889996186546655
+   }
+  ]
+ }
+}

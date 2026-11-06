@@ -167,13 +167,13 @@ $$V = A\times V_{ha}$$
 Princípios gerais (`pipeline/rules/flags.py`):
 
 - dado ausente vira `nao_avaliado` ou `inconclusivo`, **nunca** `sem_indicio`;
-- uma flag fora do status `indicio` tem severidade rebaixada para `info`;
+- `sem_indicio`/`nao_avaliado` têm severidade `info`; `inconclusivo` tem no máximo `baixa`;
 - tolerância de borda de **20 m** (2 pixels S2).
 
 | Cód. | Título | Regra exata e limiares | Severidade e confiança |
 |---|---|---|---|
-| **A** | Volume declarado sem lastro observável (POA) | **Indício** se (1) o volume declarado nas células observáveis da UPA for maior que o **p90 do Monte Carlo da UPA** **e** (2) houver **≥ 5 células `sem_lastro` contíguas** (8-conexas) **ou** um excesso Σ(declarado − p90) nas células `sem_lastro` de **≥ 10%** do declarado observável. Se só o critério (2) se cumprir → `inconclusivo`, porque pode ser erro de GPS. Se menos de 50% das células com árvore forem observáveis → `inconclusivo`. Sem árvores → `nao_avaliado`. | alta se excesso ≥ 20% do declarado; senão média. Confiança = clip(cobertura da calibração × fração observável; 0,05; 0,95) |
-| **B** | Distúrbio sem declaração | Polígonos de mudança com prob ≥ 0,5, fora da UPA a **> 20 m** do limite e **não cobertos por outra autorização**, somados (no POA) à área com distúrbio das células `nao_declarado` dentro da UPA (disturbio_frac × área). **Indício** se a área somada for ≥ **1 ha**; inconclusivo se for > 0. Alerta DETER coincidente entra como evidência (classe e data). | alta se ≥ 10 ha. Confiança = clip(0,35 + 0,4 × prob média; 0,3; 0,9), +0,1 com DETER coincidente |
+| **A** | Volume declarado sem lastro observável (POA) | Avaliada em dois níveis onde a incerteza está calibrada, **nunca por árvore ou por célula isolada**. **(i) UPA:** o volume declarado nas células observáveis supera o **p90 do Monte Carlo da UPA**. **(ii) Blocos de 3×3 células (9 ha):** um bloco é `sem_lastro` se Σ declarado > p90 do bloco e ≥ 20 m³. O p90 vem de um Monte Carlo com fator comum por bloco LogNormal(0; σ_bloco = 0,9). Há indício se o excesso somado for ≥ **10%** do declarado **e** ≥ **50 m³**; o limiar de 10% é o p95 da fração de excesso nas 72 UPAs de calibração, e A dispara em 6,9% delas. **Indício** se (i) **ou** (ii). **Inconclusivo** se houver bloco sem lastro com excesso ≥ 5% (metade do limiar), ou se menos de 50% das células com árvore forem observáveis. Sem árvores → `nao_avaliado`. | alta se (i) e (ii), ou excesso ≥ 20%; senão média. Confiança = clip(cobertura da calibração × fração observável; 0,05; 0,95) |
+| **B** | Distúrbio sem declaração | Conta polígonos de mudança com **prob média ≥ 0,6**, **≥ 0,5 ha**, **sobre floresta no pré**, fora da UPA a **> 20 m** do limite e **não cobertos por outra autorização**. **Indício** se a área fora for ≥ **1 ha**; no POA, também se o distúrbio dentro da UPA em células sem árvore declarada for ≥ **5% da área da UPA** (estradas e pátios de manejo são esperados). **Sanidade:** área fora > **3×** a autorizada ou > **30% do buffer** → `inconclusivo` (possível artefato sazonal ou desmatamento regional sem vínculo). Alerta DETER coincidente entra como evidência (classe e data). | alta se ≥ 10 ha. Confiança = clip(0,35 + 0,4 × prob média; 0,3; 0,9), +0,1 com DETER coincidente |
 | **C** | Árvores declaradas fora do polígono | Coordenada IF100 a **> 20 m e ≤ 5 km** do polígono autorizado. Acima de 5 km é **coordenada incoerente**, tratada como limitação cadastral e não contada como indício. Árvores sem coordenada tornam o resultado `inconclusivo`. | alta se ≥ 5% das árvores ou ≥ 100 m³; média se ≥ 3 árvores. Confiança 0,95 |
 | **D** | Volume explorado acima do autorizado | **POA**: Σ explorado (IF100) > Σ autorizado (POA), **ou** razão agregada IF100 Σexplorado/Σautorizado das mesmas árvores **> 1,10**, **ou** intensidade **> 30 m³/ha** (explorado ÷ área PAMGIA). Diferença por árvore acima de 10% é só contexto (cubagem real × inventário). **ASV/UAS**: **p10** do volume estimado (Monte Carlo) > volume autorizado. | POA alta se intensidade > 45 m³/ha, razão > 1,25 ou excesso total; senão média. Confiança 0,9 (POA) / 0,7 (ASV) |
 | **E** | Exploração fora da validade | **POA**: alguma data de exploração IF100 fora de [início, fim] da validade (limites inclusivos). **Imagem (ASV/UAS)**: o intervalo da mudança (fim da janela pré → fim da janela pós) é comparado à validade. Fora → indício; **intervalo que cruza a fronteira → `inconclusivo`**; menos de 1 ha de distúrbio → sem indício. | POA alta se ≥ 10% das árvores; senão média. Confiança 0,95 (POA) / 0,7 (imagem) |
@@ -184,13 +184,15 @@ O limite de 30 m³/ha usado em D segue a referência de intensidade máxima de c
 
 O limite de 1,10 para a razão IF100 vem dos dados do polo: em 293 autorizações com árvores, a razão agregada tem mediana 0,98, p90 1,03 e p95 1,05. O valor 1,10 fica acima do p95.
 
-### 3.1 Por que A é agregada por célula, e nunca por árvore
+### 3.1 Por que A é agregada (blocos de 9 ha e UPA), e nunca por árvore
 
 1. **Escala física.** A clareira de uma árvore abatida mede 200–600 m², ou 2 a 6 pixels Sentinel-2. Numa mediana sazonal ela é sub-pixel ou ruído, e fecha em meses. "Esta árvore não tem clareira" não é uma afirmação que a imagem sustente.
 2. **Erro de GPS.** As coordenadas IF100 têm erro de dezenas de metros e já chegam com problemas de sinal e inversão. Uma árvore declarada pode cair na célula vizinha da clareira real.
 3. **Rótulos.** DETER (~3 ha) e PRODES (6,25 ha) não capturam clareiras individuais. O detector aprende distúrbio em área, não árvore.
 
-Por isso, a assinatura A exige **duas** condições: divergência no **total da UPA** (contra o p90 do Monte Carlo) **e** divergência **espacialmente concentrada** (bloco contíguo ou fração relevante). Divergência isolada em células é `inconclusivo`.
+4. **Calibração.** O R² por célula de 1 ha é cerca de 0 (ver MODEL_CARD): a imagem dá uma faixa confiável, não um número por célula. Agregar em blocos de 9 ha e na UPA é onde a cobertura do intervalo foi medida.
+
+Por isso, a assinatura A só olha o **total da UPA** contra o p90 do Monte Carlo e o **excesso somado em blocos de 9 ha** contra um limiar calibrado nas UPAs sem indício (p95). Divergência pequena ou isolada é `inconclusivo` ou `sem_indicio`.
 
 ---
 

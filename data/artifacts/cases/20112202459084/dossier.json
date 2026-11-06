@@ -22,27 +22,27 @@
  "volume_autorizado_m3": 3372.69,
  "volume_declarado_explorado_m3": 2445.89,
  "volume_estimado_m3": {
-  "p10": 431.4,
-  "p50": 993.7,
-  "p90": 2314.9
+  "p10": 1035.9,
+  "p50": 2354.5,
+  "p90": 5435.4
  },
- "area_disturbio_ha": 113.81,
- "area_disturbio_fora_ha": 2565.57,
+ "area_disturbio_ha": 38.73,
+ "area_disturbio_fora_ha": 171.71,
  "n_arvores_declaradas": 494,
  "flags": [
   {
    "codigo": "A",
    "titulo": "Volume declarado sem lastro observável",
-   "status": "inconclusivo",
-   "severidade": "baixa",
-   "confianca": 0.83
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.67
   },
   {
    "codigo": "B",
    "titulo": "Distúrbio sem declaração (dentro ou fora da UPA)",
    "status": "indicio",
    "severidade": "alta",
-   "confianca": 0.7
+   "confianca": 0.74
   },
   {
    "codigo": "C",
@@ -73,25 +73,25 @@
    "confianca": 0.0
   }
  ],
- "score": 0.8412,
+ "score": 0.8474,
  "source_mode": "real",
  "analise_imagem": true,
- "processado_em": "2026-11-06T03:54:58+00:00",
+ "processado_em": "2026-11-06T07:34:00+00:00",
  "schema_version": "1.0",
  "flags_detalhe": [
   {
    "codigo": "A",
    "titulo": "Volume declarado sem lastro observável",
-   "status": "inconclusivo",
-   "severidade": "baixa",
-   "confianca": 0.83,
-   "regra": "Σ(vol. declarado − p90 compatível com a imagem) nas células 'sem_lastro' (declarado > p90 e ≥ 5 m³). Indício se o volume declarado na UPA superar o p90 do volume estimado pela imagem (Monte Carlo) E (houver ≥ 5 células sem_lastro contíguas OU o excesso for ≥ 10% do declarado). Só o critério por célula, sem divergência no agregado da UPA -> inconclusivo.",
+   "status": "sem_indicio",
+   "severidade": "info",
+   "confianca": 0.67,
+   "regra": "Avaliado em blocos de 3×3 células (9 ha) e no total da UPA, onde a incerteza está calibrada (nunca por árvore ou célula isolada). Indício se (i) o volume declarado na UPA (IF100, células observáveis) supera o p90 do volume compatível com a imagem (Monte Carlo), ou (ii) os blocos com declarado > p90 do bloco somam excesso ≥ 10% do declarado e ≥ 50 m³ (limiar = p95 das UPAs de calibração sem indício).",
    "evidencias": [
     {
      "tipo": "metrica",
-     "descricao": "50 células de 1 ha com volume declarado acima do p90 compatível com a imagem; maior bloco contíguo: 12 células",
-     "valor": 50.0,
-     "unidade": "células",
+     "descricao": "0 de 31 blocos de 9 ha com volume declarado acima do p90 compatível com a imagem (0 células destacadas)",
+     "valor": 0.0,
+     "unidade": "blocos",
      "camada": "celulas",
      "filtro": {
       "classe": "sem_lastro"
@@ -100,8 +100,8 @@
     },
     {
      "tipo": "metrica",
-     "descricao": "Volume declarado nessas células: 1.390,1 m³; p90 compatível com a imagem: 797,8 m³",
-     "valor": 1390.1,
+     "descricao": "Volume declarado nesses blocos: 0,0 m³; p90 compatível com a imagem: 0,0 m³",
+     "valor": 0.0,
      "unidade": "m³",
      "camada": null,
      "filtro": null,
@@ -109,8 +109,8 @@
     },
     {
      "tipo": "metrica",
-     "descricao": "Excesso sem lastro = 592,3 m³ (27% do declarado em células observáveis)",
-     "valor": 592.3,
+     "descricao": "Excesso sem lastro = 0,0 m³ (0% do declarado em células observáveis; limiar 10%)",
+     "valor": 0.0,
      "unidade": "m³",
      "camada": null,
      "filtro": null,
@@ -118,28 +118,15 @@
     },
     {
      "tipo": "metrica",
-     "descricao": "Volume declarado na UPA (IF100, células observáveis): 2.206,9 m³; volume compatível com a imagem (Monte Carlo): p10 431,4 · p50 993,7 · p90 2.314,9 m³",
+     "descricao": "Volume declarado na UPA (IF100, células observáveis): 2.206,9 m³; volume compatível com a imagem (Monte Carlo): p10 1.035,9 · p50 2.354,5 · p90 5.435,4 m³",
      "valor": 2206.9,
      "unidade": "m³",
      "camada": null,
      "filtro": null,
      "fonte": "s2"
-    },
-    {
-     "tipo": "texto",
-     "descricao": "Divergência concentrada em células, mas o total declarado da UPA está dentro do intervalo compatível com a imagem; pode refletir erro de GPS das coordenadas IF100.",
-     "valor": null,
-     "unidade": null,
-     "camada": null,
-     "filtro": null,
-     "fonte": null
     }
    ],
-   "volume_m3": {
-    "p10": 737.7135575763282,
-    "p50": 1114.0955781433959,
-    "p90": 1272.5885544079833
-   },
+   "volume_m3": null,
    "area_ha": null
   },
   {
@@ -147,13 +134,13 @@
    "titulo": "Distúrbio sem declaração (dentro ou fora da UPA)",
    "status": "indicio",
    "severidade": "alta",
-   "confianca": 0.7,
-   "regra": "Polígono de distúrbio (prob ≥ 0.5) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização (indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados).",
+   "confianca": 0.74,
+   "regra": "Polígono de distúrbio (prob média ≥ 0.6, ≥ 0.5 ha, sobre floresta no pré) fora da UPA, a mais de 20 m do limite e não coberto por outra autorização (indício se ≥ 1 ha); no POA, também distúrbio dentro da UPA em células sem árvore declarada (indício se ≥ 5% da área da UPA, pois estradas e pátios de manejo são esperados). Sanidade: área fora > 3× a autorizada ou > 30% do buffer -> inconclusivo.",
    "evidencias": [
     {
      "tipo": "geometria",
-     "descricao": "2.565,6 ha de distúrbio em 4 polígono(s) fora da UPA, até 2.007 m do limite",
-     "valor": 2565.57,
+     "descricao": "171,7 ha de distúrbio em 82 polígono(s) fora da UPA, até 2.006 m do limite",
+     "valor": 171.71,
      "unidade": "ha",
      "camada": "mudanca",
      "filtro": {
@@ -163,8 +150,8 @@
     },
     {
      "tipo": "geometria",
-     "descricao": "1,7 ha de distúrbio dentro da UPA em células sem árvore declarada (≥ 15% da célula)",
-     "valor": 1.74,
+     "descricao": "9,2 ha de distúrbio dentro da UPA em células sem árvore declarada (≥ 15% da célula)",
+     "valor": 9.21,
      "unidade": "ha",
      "camada": "celulas",
      "filtro": {
@@ -174,8 +161,8 @@
     },
     {
      "tipo": "documento",
-     "descricao": "9 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente DESMATAMENTO_CR de 2023-06-26",
-     "valor": 9.0,
+     "descricao": "2 alerta(s) DETER coincidente(s) com o distúrbio fora da UPA; mais recente DESMATAMENTO_CR de 2023-06-11",
+     "valor": 2.0,
      "unidade": "alertas",
      "camada": "deter",
      "filtro": null,
@@ -183,11 +170,11 @@
     }
    ],
    "volume_m3": {
-    "p10": 75.3,
-    "p50": 192.7,
-    "p90": 481.2
+    "p10": 563.3,
+    "p50": 1294.8,
+    "p90": 3008.6
    },
-   "area_ha": 2567.32
+   "area_ha": 180.92
   },
   {
    "codigo": "C",
@@ -288,7 +275,7 @@
     },
     {
      "tipo": "texto",
-     "descricao": "Imagem: Mudança observada entre 2024-09-30 e 2026-11-06; validade 2024-12-04 a 2025-12-04; área com distúrbio dentro do polígono 113,8 ha (relação com a validade: inconclusivo)",
+     "descricao": "Imagem: Mudança observada entre 2024-10-05 e 2026-10-05; validade 2024-12-04 a 2025-12-04; área com distúrbio dentro do polígono 38,7 ha (relação com a validade: inconclusivo)",
      "valor": null,
      "unidade": null,
      "camada": null,
@@ -325,8 +312,8 @@
   {
    "id": "s2_pre",
    "sensor": "Sentinel-2",
-   "rotulo": "Sentinel-2 · mediana 2024-06-01 a 2024-09-30",
-   "data": "2024-06-01/2024-09-30",
+   "rotulo": "Sentinel-2 · mediana 2024-06-01 a 2024-10-05",
+   "data": "2024-06-01/2024-10-05",
    "png": "img/s2_pre.png",
    "bounds": [
     -63.41181544080322,
@@ -341,8 +328,8 @@
   {
    "id": "s2_pos",
    "sensor": "Sentinel-2",
-   "rotulo": "Sentinel-2 · mediana 2026-07-09 a 2026-11-06",
-   "data": "2026-07-09/2026-11-06",
+   "rotulo": "Sentinel-2 · mediana 2026-06-01 a 2026-10-05",
+   "data": "2026-06-01/2026-10-05",
    "png": "img/s2_pos.png",
    "bounds": [
     -63.41181544080322,
@@ -358,7 +345,7 @@
    "id": "dndvi",
    "sensor": "Derivado",
    "rotulo": "Queda de NDVI (pós − pré)",
-   "data": "2024-09-30/2026-11-06",
+   "data": "2024-10-05/2026-10-05",
    "png": "img/dndvi.png",
    "bounds": [
     -63.41181544080322,
@@ -373,8 +360,8 @@
   {
    "id": "prob",
    "sensor": "Modelo",
-   "rotulo": "Probabilidade de distúrbio ≥ 0.37 (LightGBM)",
-   "data": "2024-09-30/2026-11-06",
+   "rotulo": "Distúrbio sobre floresta no pré, prob ≥ 0.37 (LightGBM)",
+   "data": "2024-10-05/2026-10-05",
    "png": "img/prob.png",
    "bounds": [
     -63.41181544080322,
@@ -472,14 +459,14 @@
   {
    "nome": "Volume por célula de 1 ha a partir da imagem",
    "distribuicao": "quantis LightGBM q10/q50/q90 + ajuste conformal (CQR)",
-   "valor": 0.03856207481172665,
+   "valor": 0.0,
    "unidade": "m³/ha (ajuste conformal)",
    "origem": "lgbm-quantil-v1+cqr · calibração IF100 em 72 UPAs sem indício"
   },
   {
    "nome": "Fator comum de escala por UPA",
-   "distribuicao": "lognormal(0, 0.65)",
-   "valor": 0.6475353813679239,
+   "distribuicao": "lognormal(0, 0.64)",
+   "valor": 0.6439152437199234,
    "unidade": null,
    "origem": "dispersão log declarado/estimado por UPA (validação cruzada)"
   },
@@ -560,44 +547,57 @@
   "score": "1 − exp(−Σ peso × severidade × confiança)",
   "s2_meta": {
    "crs": "EPSG:31980",
-   "n_cenas_pre": 24,
+   "n_cenas_pre": 25,
    "n_cenas_pos": 36,
    "n_cenas_limpas_pre": 10,
-   "n_cenas_limpas_pos": 13
+   "n_cenas_limpas_pos": 17
   },
   "monte_carlo_upa": {
    "upa": {
-    "p10": 431.37174486225075,
-    "p50": 993.7046642763416,
-    "p90": 2314.9302844429653
+    "p10": 1035.893117546942,
+    "p50": 2354.460183074215,
+    "p90": 5435.357505639312
    },
    "sem_lastro_excesso": {
-    "p10": 737.7135575763282,
-    "p50": 1114.0955781433959,
-    "p90": 1272.5885544079833
+    "p10": 150.11265814703202,
+    "p50": 406.0662965972683,
+    "p90": 512.1326885041262
    },
    "nao_declarado": {
-    "p10": 9.941444633353985,
-    "p50": 34.87407441857165,
-    "p90": 96.2745192303848
+    "p10": 119.96427012840172,
+    "p50": 278.6474896641695,
+    "p90": 657.869032746825
    },
    "nao_declarado_fora": {
-    "p10": 65.31517033720529,
-    "p50": 157.79524215197927,
-    "p90": 384.96886608539353
+    "p10": 443.374097722339,
+    "p50": 1016.1046076854382,
+    "p90": 2350.7584492772658
    },
    "declarado_upa_m3": 2206.9438,
-   "prob_declarado_acima_estimado": 0.8868,
+   "prob_declarado_acima_estimado": 0.4572,
    "n_celulas": 169,
-   "sigma_upa": 0.6475353813679239
+   "sigma_upa": 0.6439152437199234
   },
   "celulas_por_classe": {
-   "consistente": 70,
-   "sem_lastro": 50,
-   "sem_atividade": 47,
-   "nao_observavel": 6,
-   "nao_declarado": 2
-  }
+   "consistente": 120,
+   "nao_declarado": 32,
+   "sem_atividade": 17,
+   "nao_observavel": 6
+  },
+  "blocos_9ha": {
+   "n": 31,
+   "sem_lastro": 0,
+   "excesso_m3": 0.0,
+   "sigma_bloco": 0.9
+  },
+  "mascara_floresta": {
+   "frac_floresta_pre": 0.4214370179494873,
+   "frac_nao_floresta_ndvi": 0.542946398630403,
+   "px_excluidos_prodes": 10090,
+   "ndvi_min": 0.7,
+   "ano_pre": 2024
+  },
+  "area_buffer_ha": 2709.8
  },
  "proveniencia": [
   {
@@ -620,7 +620,7 @@
    "id": "s2",
    "fonte": "Copernicus Sentinel-2 L2A (harmonizado) via Google Earth Engine",
    "url": "https://developers.google.com/earth-engine/datasets/catalog/COPERNICUS_S2_SR_HARMONIZED",
-   "consultado_em": "2026-11-06T03:54:21+00:00",
+   "consultado_em": "2026-11-06T07:33:52+00:00",
    "versao": null,
    "licenca": "Copernicus open"
   },
@@ -650,9 +650,11 @@
   }
  ],
  "limitacoes": [
+  "A estação seca posterior ao período de interesse (2027) ainda não está disponível; usada a mais recente (2026).",
+  "Máscara de floresta: só conta distúrbio em pixel com NDVI pré ≥ 0.7 e fora de PRODES até 2024; 42% da AOI observável era floresta no pré.",
   "Nuvem/sem dado: 6 de 175 células da UPA (3%) não observáveis (classe nao_observavel); volume dessas células não entra na estimativa.",
   "CBERS-4A WPM 2 m não processado para este caso (reservado aos 5 casos de maior score).",
-  "Janelas Sentinel-2: pré 2024-06-01 a 2024-09-30; pós 2026-07-09 a 2026-11-06. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 24 e 36.",
+  "Janelas Sentinel-2: pré 2024-06-01 a 2024-10-05; pós 2026-06-01 a 2026-10-05. Nuvem sem observação limpa: 0.0% (pré) e 0.0% (pós); cenas na mediana: 25 e 36.",
   "A mudança detectada é datada apenas pelo intervalo entre as janelas; não há data exata do evento.",
   "Detector LightGBM treinado com rótulos PRODES/DETER (corte raso e degradação); recall para exploração seletiva é baixo (clareiras de árvore isolada de 200–600 m² são sub-pixel e fecham em meses). Ausência de distúrbio na imagem não prova ausência de exploração.",
   "Camadas de UC/TI/embargo não integradas: F6 não avaliado.",
@@ -666,7 +668,7 @@
   },
   {
    "data": "2024-06-01",
-   "evento": "Início da janela Sentinel-2 pré (2024-06-01 a 2024-09-30)",
+   "evento": "Início da janela Sentinel-2 pré (2024-06-01 a 2024-10-05)",
    "fonte": "s2"
   },
   {
@@ -685,8 +687,8 @@
    "fonte": "pamgia"
   },
   {
-   "data": "2026-07-09",
-   "evento": "Início da janela Sentinel-2 pós (2026-07-09 a 2026-11-06)",
+   "data": "2026-06-01",
+   "evento": "Início da janela Sentinel-2 pós (2026-06-01 a 2026-10-05)",
    "fonte": "s2"
   },
   {

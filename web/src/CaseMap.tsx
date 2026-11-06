@@ -11,16 +11,16 @@ export type Focus = { ev: Evidencia; nonce: number };
 
 export const layerInfo: Record<string, { label: string; color: string; kind: "line" | "fill" | "dot" | "dash" }> = {
   upa: { label: "UPA / área autorizada", color: "#c5f67c", kind: "dash" },
-  buffer: { label: "Entorno analisado (2 km)", color: "#e7e9d9", kind: "line" },
+  buffer: { label: "Entorno de 2 km", color: "#e7e9d9", kind: "line" },
   celulas: { label: "Células de 1 ha", color: "#c026d3", kind: "fill" },
-  arvores: { label: "Árvores declaradas (IF100)", color: "#f4f1d0", kind: "dot" },
+  arvores: { label: "Árvores declaradas", color: "#f4f1d0", kind: "dot" },
   mudanca: { label: "Polígonos de distúrbio", color: "#ff4d4d", kind: "line" },
   deter: { label: "Alertas DETER", color: "#f59e0b", kind: "fill" },
   prodes: { label: "PRODES (corte raso)", color: "#facc15", kind: "line" },
 };
 
 export const cellClasses: { id: CelulaClasse; label: string; color: string }[] = [
-  { id: "sem_lastro", label: "Declarado sem lastro observável", color: "#d946ef" },
+  { id: "sem_lastro", label: "Sem lastro observável", color: "#d946ef" },
   { id: "nao_declarado", label: "Distúrbio não declarado", color: "#ef4444" },
   { id: "consistente", label: "Consistente", color: "#86c98a" },
   { id: "nao_observavel", label: "Não observável (nuvem)", color: "#9ca3af" },
@@ -212,7 +212,7 @@ export function CaseMap({ dossier: d, focus }: { dossier: Dossier; focus?: Focus
   const [basemap, setBm] = useState(false);
   const [popup, setPopup] = useState<Popup>(null);
   const [highlight, setHighlight] = useState<string | null>(null);
-  const [legendOpen, setLegendOpen] = useState(true);
+  const [legendOpen, setLegendOpen] = useState(() => window.innerHeight >= 820);
   const layerIds = useRef<Record<string, string[]>>({});
   const vectorNames = d.camadas.filter((c) => c !== "imagem");
 
@@ -322,14 +322,14 @@ export function CaseMap({ dossier: d, focus }: { dossier: Dossier; focus?: Focus
     ms.forEach((m) => {
       if (!m.getSource("focus")) {
         m.addSource("focus", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        m.addLayer({ id: "focus-fill", type: "fill", source: "focus", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#ffffff", "fill-opacity": 0.12 } });
-        m.addLayer({ id: "focus-line", type: "line", source: "focus", paint: { "line-color": "#ffffff", "line-width": 2.5 } });
+        m.addLayer({ id: "focus-fill", type: "fill", source: "focus", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#c5f67c", "fill-opacity": 0.1 } });
+        m.addLayer({ id: "focus-line", type: "line", source: "focus", paint: { "line-color": "#c5f67c", "line-width": 2 } });
         m.addLayer({
           id: "focus-pt",
           type: "circle",
           source: "focus",
           filter: ["==", ["geometry-type"], "Point"],
-          paint: { "circle-radius": 11, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2.5 },
+          paint: { "circle-radius": 10, "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": "#c5f67c", "circle-stroke-width": 2.5 },
         });
       }
       const interactive = ["celulas", "arvores", "arvores-cluster", "mudanca-fill", "deter-fill", "prodes-fill"].filter((l) => m.getLayer(l));
@@ -374,7 +374,7 @@ export function CaseMap({ dossier: d, focus }: { dossier: Dossier; focus?: Focus
     el.classList.toggle("below", p.y < 250);
     const inner = el.firstElementChild as HTMLElement | null;
     if (inner) {
-      const half = 160;
+      const half = 150;
       const shift = p.x < half + 8 ? half + 8 - p.x : p.x > w - half - 8 ? w - half - 8 - p.x : 0;
       inner.style.setProperty("--dx", `${Math.round(shift)}px`);
     }

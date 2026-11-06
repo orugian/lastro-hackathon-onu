@@ -185,12 +185,12 @@ export function DossierPage({ autex, openAnalyze }: { autex: string; openAnalyze
             </h1>
             <span className="tipo big">{tipoLabel(d)}</span>
             <SimBadge show={d.source_mode === "simulado"} />
-            <ExperimentalSeal compact />
           </div>
           <p className="dh-sub">
             {titleCase(d.municipio)} / {d.uf} · {d.area_autorizada_ha != null ? `${fmt(d.area_autorizada_ha)} ha` : "área não informada"} · validade {fmtDate(d.validade.inicio)} – {fmtDate(d.validade.fim)}
             {d.situacao ? ` · ${d.situacao}` : ""}
           </p>
+          <ExperimentalSeal compact />
         </div>
         <div className="dh-right">
           <div className="prio" style={{ "--pc": priorityColor[p] } as React.CSSProperties}>

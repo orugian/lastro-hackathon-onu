@@ -1,4 +1,4 @@
-import type { CaseSummary, MetricsCalibracao } from "./types";
+﻿import type { CaseSummary, MetricsCalibracao } from "./types";
 import { fmt, fmtVol } from "./data";
 
 function niceMax(v: number) {
@@ -110,7 +110,8 @@ export function CalibrationChart({ data: d }: { data: MetricsCalibracao }) {
       .map((p) => `L${x(p.disturbio_frac).toFixed(1)},${y(p.p10).toFixed(1)}`)
       .join(" ") +
     " Z";
-  const yt = [0, 0.25, 0.5, 0.75, 1].map((f) => f * yMax);
+  const nT = Number.isInteger(yMax / 4) ? 4 : 5;
+  const yt = Array.from({ length: nT + 1 }, (_, i) => (i / nT) * yMax);
   const xt = [0, 0.25, 0.5, 0.75, 1].map((f) => f * xMax);
   const last = pts[pts.length - 1];
   return (
@@ -132,16 +133,26 @@ export function CalibrationChart({ data: d }: { data: MetricsCalibracao }) {
       <path d={path("p10")} fill="none" stroke="#8fb57a" strokeWidth={1} />
       <path d={path("p90")} fill="none" stroke="#8fb57a" strokeWidth={1} />
       <path d={path("p50")} fill="none" stroke="#173a2c" strokeWidth={2.5} />
-      <text x={x(last.disturbio_frac) - 6} y={y(last.p90) - 6} textAnchor="end" className="ann">
-        p90
-      </text>
-      <text x={x(last.disturbio_frac) - 6} y={y(last.p50) - 7} textAnchor="end" className="ann strong">
-        mediana p50
-      </text>
-      <text x={x(last.disturbio_frac) - 6} y={y(last.p10) + 15} textAnchor="end" className="ann">
-        p10
-      </text>
-      <text x={L} y={T - 6} className="axis-title">
+      {(() => {
+        const mid = pts[Math.floor(pts.length * 0.72)] ?? last;
+        const xm = x(mid.disturbio_frac);
+        const gap = y(mid.p10) - y(mid.p50);
+        return (
+          <>
+            <text x={xm} y={y(mid.p90) - 8} textAnchor="middle" className="ann">
+              p90
+            </text>
+            <text x={xm} y={y(mid.p50) - 8} textAnchor="middle" className="ann strong">
+              mediana p50
+            </text>
+            {gap > 22 && (
+              <text x={xm} y={y(mid.p10) + 16} textAnchor="middle" className="ann">
+                p10
+              </text>
+            )}
+          </>
+        );
+      })()}      <text x={L} y={T - 6} className="axis-title">
         m³ por hectare
       </text>
       <text x={(L + W - R) / 2} y={H - 8} textAnchor="middle" className="axis-title">
