@@ -44,7 +44,18 @@ Os dados brutos ficam em `data/raw/` (`scripts/download_bg.ps1`). Todas as etapa
 | Detector LightGBM vs baseline Otsu (fora da amostra, 65.500 px) | IoU **0,561** vs 0,283 · F1 **0,719** vs 0,442 | `data/artifacts/metrics/detector.json` |
 | Deep learning (Colab, experimental, mesmos 1,98 mi px, blocos de 25 km) | U-Net siamesa IoU **0,742** × LightGBM 0,705 × Otsu 0,432. Ainda não integrada; o operacional segue LightGBM | `data/artifacts/metrics/dl.json` |
 | Calibração imagem → volume (72 UPAs, 17.193 células, GroupKFold por UPA) | cobertura empírica p10–p90 de **84,2%** por célula (78,8% antes do conformal) e **88,9%** por UPA, contra 80% nominais | `data/artifacts/metrics/calibracao.json` |
-| Triagem exportada | 1.142 autorizações; **5** com análise de imagem; **48** com ao menos um indício (B 5 · C 11 · D 11 · E 29 · F2 2; A 0) | `data/artifacts/index.json` (06/11/2026 07:33Z) |
+| Triagem exportada | 1.142 autorizações reais + 1 cenário SIMULAÇÃO; **38** com análise de imagem; **61** com ao menos um indício (A 1 · B 34 · C 11 · D 10 · E 29 · F2 2) | `data/artifacts/index.json` |
+| Comunicações ao IBAMA (prioridade ≥ 70) | **14** protocolos gerados automaticamente (13 reais + 1 simulado) | `/api/comunicacoes` |
+
+## Comunicação automática ao IBAMA (regra de limiar)
+
+Quando um caso atinge **prioridade ≥ 70** (score ≥ 0,70) e tem ao menos um indício, o sistema **gera automaticamente um protocolo de comunicação** destinado à Ouvidoria do IBAMA (canal oficial Fala.BR). O protocolo contém: AUTEX/DOF de referência, volumes (autorizado, declarado e estimado p10–p90), indícios com regra e evidências, limitações, proveniência, link do dossiê e **hash SHA-256** do pacote. Tudo fica numa trilha de auditoria (tela **Comunicações**).
+
+Salvaguardas:
+- O envio exige **confirmação de um servidor identificado, com justificativa** (`LASTRO_CONFIRMACAO_HUMANA=1`, padrão). O score é índice de prioridade, não probabilidade de irregularidade.
+- Cenários `SIMULAÇÃO` **nunca** são enviados.
+- O conector padrão é `simulado`: grava numa caixa de saída local, sem contato externo. `LASTRO_CONECTOR=falabr` gera o texto para protocolo no Fala.BR, que não tem API pública. `LASTRO_CONECTOR=email` envia por SMTP (`LASTRO_SMTP_HOST`, `LASTRO_EMAIL_DESTINO`…) e só deve ser ativado mediante acordo institucional.
+- O limiar é configurável: `LASTRO_LIMIAR_COMUNICACAO` (padrão `0.70`). Código em [`pipeline/comunicacao.py`](pipeline/comunicacao.py).
 
 ## Documentação
 

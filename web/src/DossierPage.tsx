@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import type { Dossier, Evidencia, Flag } from "./types";
 import { fmt, fmtDate, fmtVol, pct, printableUrl, priority, priorityColor, priorityLabel, scoreInt, severityLabel, sortFlags, staticMode, statusLabel, tipoLabel, titleCase, useData } from "./data";
 import { CaseMap, layerInfo, type Focus } from "./CaseMap";
@@ -202,9 +202,16 @@ export function DossierPage({ autex, openAnalyze }: { autex: string; openAnalyze
               </small>
             </span>
           </div>
-          <a className="button" target="_blank" rel="noreferrer" href={printableUrl(d.autex)} onClick={(e) => staticMode && (e.preventDefault(), window.print())}>
-            <Icon name="print" size={16} /> Dossiê imprimível
-          </a>
+          <div className="dh-actions">
+            <a className="button" target="_blank" rel="noreferrer" href={printableUrl(d.autex)} onClick={(e) => staticMode && (e.preventDefault(), window.print())}>
+              <Icon name="print" size={16} /> Dossiê imprimível
+            </a>
+            {d.score >= 0.7 && nInd > 0 && !staticMode && (
+              <a className="button ibama" href="#/comunicacoes" title="Score ≥ 70: protocolo de comunicação gerado automaticamente">
+                <Icon name="external" size={16} /> Comunicação ao IBAMA
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

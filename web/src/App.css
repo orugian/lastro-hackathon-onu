@@ -2159,3 +2159,40 @@
   font-size: 12px;
   fill: var(--ink-3);
 }
+/* ============ comunicações ao IBAMA ============ */
+.com-page { max-width: 1180px; width: 100%; margin: 0 auto; padding: 24px 24px 48px; }
+.com-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+.com-head h1 { font-family: var(--serif); font-weight: 400; font-size: 30px; margin: 0 0 6px; }
+.com-sub { margin: 0; color: var(--ink-2); max-width: 760px; font-size: 15px; line-height: 1.5; }
+.com-kpis { display: flex; gap: 18px; color: var(--ink-2); font-size: 14px; white-space: nowrap; }
+.com-kpis b { color: var(--ink); font-size: 20px; font-variant-numeric: tabular-nums; margin-right: 4px; }
+.com-rule { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0; padding: 12px 16px; background: var(--amber-bg); color: var(--amber-ink); border: 1px solid #f3dfb3; border-radius: 8px; font-size: 14px; line-height: 1.5; }
+.com-rule svg { flex: none; margin-top: 2px; }
+.com-rule p { margin: 0; }
+.com-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.com-item { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.com-top { display: flex; justify-content: space-between; gap: 16px; }
+.com-id { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.com-id .mono { font-family: var(--mono); font-weight: 600; font-size: 15px; }
+.com-status { font-size: 12.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); }
+.com-status.st-wait { background: var(--amber-bg); color: var(--amber-ink); border-color: #f3dfb3; }
+.com-status.st-ok { background: #ecf6e4; color: #2f5a22; border-color: #cfe6bf; }
+.com-status.st-off { background: var(--paper-2); color: var(--ink-3); }
+.com-status.st-err { background: #fdeaea; color: var(--danger); border-color: #f2c4c4; }
+.com-case { margin-top: 6px; color: var(--ink-2); font-size: 14px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.com-case a { color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.com-case .flagchip { display: inline-block; font-weight: 700; font-size: 12px; padding: 1px 6px; border-radius: 4px; background: #fdeaea; color: var(--danger); }
+.com-score { text-align: right; line-height: 1; }
+.com-score b { display: block; font-family: var(--serif); font-size: 34px; font-weight: 400; color: var(--danger); }
+.com-score small { color: var(--ink-3); font-size: 12px; }
+.com-meta { display: flex; gap: 18px; align-items: center; margin-top: 12px; font-size: 13.5px; flex-wrap: wrap; }
+.com-meta a { display: inline-flex; gap: 5px; align-items: center; color: var(--ink); text-decoration: underline; text-underline-offset: 2px; }
+.com-meta .hash { color: var(--ink-3); font-family: var(--mono); font-size: 12px; }
+.com-trail { margin: 12px 0 0; padding: 10px 0 0 18px; border-top: 1px solid var(--line-2); color: var(--ink-2); font-size: 13px; line-height: 1.6; }
+.com-actions { display: flex; gap: 8px; margin-top: 12px; }
+.com-confirm { margin-top: 12px; padding: 12px; background: var(--paper); border-radius: 8px; display: grid; gap: 8px; }
+.com-confirm p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.com-confirm input, .com-confirm textarea { font: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.dh-actions { display: flex; flex-direction: column; gap: 8px; }
+.button.ibama { background: var(--danger); color: #fff; border-color: var(--danger); }
+.button.ibama:hover { filter: brightness(1.1); }

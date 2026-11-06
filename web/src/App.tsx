@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnalyzeModal } from "./AnalyzeModal";
+import { Comunicacoes } from "./Comunicacoes";
 import { DossierPage } from "./DossierPage";
 import { Reliability } from "./Reliability";
 import { Triage } from "./Triage";
@@ -26,7 +27,7 @@ export default function App() {
   const [modal, setModal] = useState<string | null>(null);
   const caseMatch = route.match(/^#\/caso\/(.+)$/);
   const autex = caseMatch ? decodeURIComponent(caseMatch[1]) : null;
-  const page = autex ? "caso" : route.startsWith("#/confiabilidade") ? "conf" : "triagem";
+  const page = autex ? "caso" : route.startsWith("#/confiabilidade") ? "conf" : route.startsWith("#/comunicacoes") ? "com" : "triagem";
   const [last, setLast] = useState(() => sessionStorage.getItem(LAST));
   useEffect(() => {
     if (autex) {
@@ -62,6 +63,9 @@ export default function App() {
           <a className={page === "conf" ? "on" : ""} href="#/confiabilidade">
             Confiabilidade
           </a>
+          <a className={page === "com" ? "on" : ""} href="#/comunicacoes">
+            Comunicações
+          </a>
         </nav>
         <div className="top-right">
           <ExperimentalSeal />
@@ -70,7 +74,7 @@ export default function App() {
           </button>
         </div>
       </header>
-      {page === "caso" && autex ? <DossierPage key={autex} autex={autex} openAnalyze={(a) => setModal(a)} /> : page === "conf" ? <Reliability /> : <Triage />}
+      {page === "caso" && autex ? <DossierPage key={autex} autex={autex} openAnalyze={(a) => setModal(a)} /> : page === "conf" ? <Reliability /> : page === "com" ? <Comunicacoes /> : <Triage />}
       {modal !== null && <AnalyzeModal initial={modal} close={() => setModal(null)} />}
     </div>
   );

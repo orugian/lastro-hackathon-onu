@@ -264,6 +264,45 @@ def create_app(artifacts_root=None, dist_root=None):
             raise HTTPException(404, "Job não encontrado")
         return deepcopy(jobs[job_id])
 
+    # ---- Comunicações ao IBAMA (score ≥ limiar → protocolo automático; envio com confirmação humana) ----
+    from pipeline import comunicacao as com_mod
+
+    def _sync_comunicacoes():
+        idx = artifacts.read("index.json", model=Index)
+        casos = [c.model_dump() for c in idx.casos]
+        return com_mod.gerar_automaticamente(casos, lambda a: dossier(a).model_dump())
+
+    @app.get("/api/comunicacoes")
+    def comunicacoes():
+        resumo = _sync_comunicacoes()
+        estado = com_mod.carregar()
+        estado["comunicacoes"] = sorted(estado["comunicacoes"], key=lambda c: -c["score"])
+        return {**estado, "ultima_varredura": resumo, "aviso": com_mod.AVISO, "destino": com_mod.DESTINO}
+
+    @app.get("/api/comunicacoes/{protocolo}/texto", response_class=HTMLResponse)
+    def comunicacao_texto(protocolo: str):
+        safe_name(protocolo)
+        p = com_mod.BASE / "pacotes" / f"{protocolo}.txt"
+        if not p.is_file():
+            raise HTTPException(404, "Protocolo não encontrado")
+        return HTMLResponse(f"<pre style='white-space:pre-wrap;font:14px/1.5 ui-monospace,monospace;padding:24px'>{escape(p.read_text(encoding='utf-8'))}</pre>")
+
+    @app.post("/api/comunicacoes/{protocolo}/{acao}")
+    def comunicacao_acao(protocolo: str, acao: str, body: dict):
+        safe_name(protocolo)
+        servidor = str(body.get("servidor", "")).strip()
+        justificativa = str(body.get("justificativa", "")).strip()
+        if not servidor or len(justificativa) < 10:
+            raise HTTPException(422, "Informe o servidor responsável e uma justificativa (mín. 10 caracteres).")
+        try:
+            if acao == "confirmar":
+                return com_mod.confirmar(protocolo, servidor, justificativa)
+            if acao == "descartar":
+                return com_mod.descartar(protocolo, servidor, justificativa)
+        except KeyError:
+            raise HTTPException(404, "Protocolo não encontrado") from None
+        raise HTTPException(404, "Ação inválida")
+
     dist = Path(dist_root) if dist_root else PROJECT_ROOT / "web/dist"
     if dist.is_dir():
         app.mount("/", SPAFiles(directory=dist, html=True), name="web")
