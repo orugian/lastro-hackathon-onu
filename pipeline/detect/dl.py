@@ -21,7 +21,8 @@ from shapely.geometry import mapping, shape
 from .common import read_stack
 
 ROOT = Path(__file__).resolve().parents[2]
-ONNX = ROOT / "data/processed/dl/lastro_unet.onnx"
+ONNX = next((p for p in (ROOT / "models/lastro_unet.onnx", ROOT / "data/processed/dl/lastro_unet.onnx") if p.exists()),
+            ROOT / "models/lastro_unet.onnx")
 # Normalização usada no treino (config.json do Colab: normalization_mean/std)
 MEAN = np.array([.108, .137, .151, .226, .240, .186], np.float32)
 STD = np.array([.057, .065, .079, .103, .114, .104], np.float32)
