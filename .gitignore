@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+web/dist/
+data/raw/
+data/processed/
+_sondagem/
+agentes/logs/
+*.tif
+!data/artifacts/**/*.tif
+.env
