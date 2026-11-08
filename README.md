@@ -8,6 +8,8 @@ O Lastro é uma triagem para priorizar a fiscalização da exploração madeirei
 
 ![Tela de triagem do Lastro com dados reais do polo AMACRO](tests/web/screens/real-01-triagem.png)
 
+![Tela](tests/web/screens/final-02-dossie-a.png)
+
 *Triagem com dados reais do polo AMACRO (06/11/2026). Dossiê ([exemplo](tests/web/screens/real-03-dossie-a-evidencia.png)) e Confiabilidade completam a jornada.*
 
 ## Rodar a demo (1 comando)
