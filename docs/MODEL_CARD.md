@@ -5,7 +5,7 @@
 | Campo | Valor |
 |---|---|
 | Sistema | Lastro: triagem da consistência entre volume de madeira declarado (IF100) e o que o satélite observa |
-| Versão | detector operacional `lightgbm` (limiar 0,37) · calibração `lgbm-quantil-v1+cqr` · contrato de artefatos v1.0 · U-Net siamesa (Colab) experimental, ainda não integrada |
+| Versão | LightGBM (limiar 0,37) confirmado pela U-Net siamesa (regra AND) na detecção espacial · LightGBM para volume · calibração `lgbm-quantil-v1+cqr` · contrato de artefatos v1.0 |
 | Região | Polo AMACRO: Sul do AM (Humaitá, Lábrea, Novo Aripuanã, Manicoré, Canutama) + Porto Velho e Candeias do Jamari (RO) |
 | Período | Explorações e imagens 2022–2026 |
 | Arquivos de métricas | `data/artifacts/metrics/detector.json`, `calibracao.json`, `montecarlo.json` |
@@ -55,7 +55,7 @@ O LightGBM dobra o IoU do baseline. O baseline é muito preciso, mas perde 71% d
 O corte seletivo, que é o caso principal do Lastro, é o mais difícil: o modelo encontra cerca de 57% dos pixels de referência. Por isso a decisão é tomada por célula e por UPA, e não por pixel.
 
 ### Trilha de deep learning (Colab, experimental)
-O notebook `colab/lastro_dl.ipynb` rodou numa Tesla T4 em modo rápido: 400 chips de 224×224 px, 9 épocas e early stopping. O modelo usado foi uma **U-Net siamesa (encoder ResNet34 compartilhado entre pré e pós)**.
+O treinamento original, realizado no Google Colab (não incluído no MVP), rodou numa Tesla T4 em modo rápido: 400 chips de 224×224 px, 9 épocas e early stopping. O modelo usado foi uma **U-Net siamesa (encoder ResNet34 compartilhado entre pré e pós)**.
 
 Protocolo próprio: blocos UTM de 25 km, split 70/15/15 por bloco, seed 42, 1.977.980 pixels de teste espacial. A amostra é enriquecida em positivos, então não estima prevalência regional.
 
@@ -71,10 +71,10 @@ Fontes: `data/artifacts/metrics/dl.json` (métricas e config) e as entradas `[Co
 
 **Comparabilidade.** Esses números **não são comparáveis** com a tabela do detector operacional (blocos de 5 km, 5 folds, 65.500 px). A comparação justa é sempre dentro de cada protocolo.
 
-**Status.** O Prithvi-EO-2.0 foi tentado e caiu no fallback por incompatibilidade de versão TerraTorch/TorchGeo no Colab. A U-Net foi treinada, exportada para ONNX (`data/processed/dl/lastro_unet.onnx`, 95 MB, roda em CPU com ONNX Runtime em cerca de 5 s por autorização) e **integrada ao pipeline** após a validação independente abaixo.
+**Status.** O Prithvi-EO-2.0 foi tentado e caiu no fallback por incompatibilidade de versão TerraTorch/TorchGeo no Colab. A U-Net foi treinada, exportada para ONNX (`models/lastro_unet.onnx`, via Git LFS, aproximadamente 96 MiB, roda em CPU com ONNX Runtime em cerca de 5 s por autorização) e **integrada ao pipeline** após a validação independente abaixo.
 
 ### Validação independente da U-Net e regra operacional (protocolo local)
-`pipeline/detect/avaliar_dl.py` e `pipeline/detect/calibrar_dl.py`: 21 blocos de 5 km do dataset do detector que **a U-Net nunca viu** (excluídos os 15 blocos com chips de treino ou validação do Colab), avaliados **parede a parede** (todos os pixels rotulados do bloco). O LightGBM de cada bloco é o modelo do fold em que aquele bloco foi teste. Os blocos foram divididos ao acaso: a regra foi escolhida na metade A e **medida na metade B (10 blocos, 1,54 mi px)**.
+A avaliação e a calibração offline originais (ferramentas não incluídas no MVP) utilizaram 21 blocos de 5 km do dataset do detector que **a U-Net nunca viu** (excluídos os 15 blocos com chips de treino ou validação do Colab), avaliados **parede a parede** (todos os pixels rotulados do bloco). O LightGBM de cada bloco é o modelo do fold em que aquele bloco foi teste. Os blocos foram divididos ao acaso: a regra foi escolhida na metade A e **medida na metade B (10 blocos, 1,54 mi px)**.
 
 | Metade B (mesmos pixels) | IoU | Precisão | Recall | Falso alarme* |
 |---|---|---|---|---|
@@ -90,11 +90,11 @@ Fontes: `data/artifacts/metrics/dl.json` (métricas e config) e as entradas `[Co
 
 **Onde cada modelo é usado.** Detecção espacial (polígonos de distúrbio, áreas dentro/fora, indícios B e F2, camada "prob" no mapa): regra AND. Conversão imagem → volume (indício A, p10/p50/p90): LightGBM, porque recalibrar o volume sobre a U-Net piorou a calibração (R² por UPA 0,21 × 0,33; disparo de A em UPAs limpas 9,7% × 6,9%). O detector é configurável por `LASTRO_DETECTOR=unet|lightgbm`.
 
-**Efeito nos dossiês.** Nos 39 casos com imagem, a área de distúrbio fora da UPA caiu em média cerca de 30% (ex.: 20112202459084: 14,2 → 4,5 ha; 20132202386081: 33,7 → 3,6 ha). Os indícios dos casos de topo se mantiveram, e 11 casos ficaram acima do limiar de comunicação (antes, 13 reais).
+**Efeito nos dossiês (execução original).** Nos 39 casos com imagem então avaliados, a área de distúrbio fora da UPA caiu em média cerca de 30% (ex.: 20112202459084: 14,2 → 4,5 ha; 20132202386081: 33,7 → 3,6 ha). Os indícios dos casos de topo se mantiveram, e 11 casos ficaram acima do limiar de comunicação (antes, 13 reais).
 
-![Exemplo de teste espacial da U-Net siamesa: pré, pós, rótulo INPE (vazio = ignorado) e probabilidade](img/dl_exemplo_1.png)
+![Exemplo de teste espacial da U-Net siamesa: pré, pós, rótulo INPE (vazio = ignorado) e probabilidade](../web/public/dl/dl_exemplo_1.png)
 
-Outros exemplos: [2](img/dl_exemplo_2.png) · [3](img/dl_exemplo_3.png) · [4](img/dl_exemplo_4.png). No exemplo 3, a U-Net marca probabilidade alta em parte da área de floresta estável (rótulo negativo) no canto inferior, um tipo de falso positivo a acompanhar.
+Outros exemplos: [2](../web/public/dl/dl_exemplo_2.png) · [3](../web/public/dl/dl_exemplo_3.png) · [4](../web/public/dl/dl_exemplo_4.png). No exemplo 3, a U-Net marca probabilidade alta em parte da área de floresta estável (rótulo negativo) no canto inferior, um tipo de falso positivo a acompanhar.
 
 ### Limitações do detector
 - **Rótulos fracos.** DETER (~3 ha de área mínima) e PRODES (6,25 ha) não captam todas as pequenas clareiras de manejo seletivo. Ausência de rótulo não garante floresta intacta.

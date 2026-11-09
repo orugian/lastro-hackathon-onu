@@ -29,6 +29,6 @@ Todas as fontes são públicas. Nenhum dado pessoal (nome, CPF ou CNPJ) é expor
 
 ## Reprodutibilidade
 
-- Os downloads brutos ficam em `data/raw/` (não versionado). Script: `scripts/download_bg.ps1`.
+- Os downloads brutos ficam em `data/raw/` (não versionado). A demo usa os artefatos já incluídos e não exige download. Para reprocessar, obtenha os CSVs POA/ASV/UAS, os CSVs IF100 (2022+) e os CSVs DOF AUTEX nas fontes acima; disponha-os como descrito no README.
 - Os caches de WFS ficam em `data/processed/inpe_cache/`. A proveniência fica em `data/processed/deter.proveniencia.json` e `prodes.proveniencia.json`.
 - Sentinel-2 e CBERS são cacheados por AOI, com chave de hash das entradas (`s2_meta.json` e sidecar `.json` do CBERS).

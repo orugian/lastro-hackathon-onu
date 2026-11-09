@@ -1,4 +1,4 @@
-﻿"""Amostragem real GEE/INPE, cache por tile e exclusao historica de negativos."""
+"""Amostragem real GEE/INPE, cache por tile e exclusao historica de negativos."""
 import argparse,json,time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -6,6 +6,7 @@ import ee,requests,numpy as np,pandas as pd
 from pyproj import Transformer
 from shapely.geometry import shape,box,mapping
 from .common import BANDS
+from pipeline.imagery.s2 import initialize
 ROOT=Path('data/processed/ml'); URL='https://terrabrasilis.dpi.inpe.br/geoserver/ows'
 LAYERS={'deter':'deter-amz:deter_amz','prodes':'prodes-legal-amz:yearly_deforestation'}
 def demo_exclusion():
@@ -96,7 +97,7 @@ def tile_job(item):
 
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument('--tiles',type=int,default=36); args=parser.parse_args()
-    ROOT.mkdir(parents=True,exist_ok=True); ee.Initialize(project='project-f5ab0bff-aa9b-4cb2-97d')
+    ROOT.mkdir(parents=True,exist_ok=True); initialize()
     seeds_path=ROOT/'seeds.json'
     if seeds_path.exists(): seeds=json.loads(seeds_path.read_text())
     else:

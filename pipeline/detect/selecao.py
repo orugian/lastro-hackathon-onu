@@ -2,7 +2,7 @@
 
 Detecção espacial (polígonos de distúrbio, áreas dentro/fora, indícios B/F2, camada de mudança no mapa):
   REGRA AND = pixel é distúrbio se LightGBM ≥ limiar E U-Net siamesa (deep learning) ≥ 0,5.
-  Avaliação em 21 blocos de 5 km nunca vistos pela U-Net (pipeline/detect/avaliar_dl.py, calibrar_dl.py):
+  Avaliação offline original em 21 blocos de 5 km nunca vistos pela U-Net (ver docs/MODEL_CARD.md):
     - U-Net sozinha: IoU 0,729 (LightGBM 0,452), mas falso alarme 37,7% (LightGBM 16,1%) e, em florestas
       manejadas sem alerta, manchas de ~2 km em dossel intacto (mudança de domínio: treino com ≥ 50% de chips positivos).
     - Regra escolhida em metade dos blocos (A) e reportada na outra metade (B): AND tem IoU 0,455 (≈ LightGBM 0,451),

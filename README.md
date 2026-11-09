@@ -2,110 +2,100 @@
 
 **O volume de madeira declarado tem lastro na floresta?**
 
-O Lastro é uma triagem para priorizar a fiscalização da exploração madeireira na Amazônia. Para cada autorização, ele cruza três coisas: o polígono e o volume autorizados (Sinaflor/PAMGIA, POA, DOF AUTEX), cada árvore que o detentor declarou como explorada (IBAMA IF100, com coordenada, volume e data) e o que os satélites Sentinel-2 (10 m) e CBERS-4A (2 m) mostram. O resultado é uma fila ordenada de autorizações com indícios explicáveis, cada um com regra, limiar, evidência e fonte.
+Protótipo de triagem da exploração madeireira na Amazônia. Cruza autorizações e volumes públicos do IBAMA, árvores declaradas no IF100 e evidências Sentinel-2/CBERS para ordenar uma fila de fiscalização com indícios explicáveis.
 
-> **Aviso de uso.** Resultado experimental de triagem. **Não constitui prova nem auto de infração.** Indica onde olhar primeiro. A conclusão exige vistoria e análise técnica humana.
+> **Resultado experimental de triagem. Não constitui prova nem auto de infração.** O score é prioridade, não probabilidade de irregularidade. A conclusão exige vistoria e análise técnica humana.
 
-![Tela de triagem do Lastro com dados reais do polo AMACRO](tests/web/screens/real-01-triagem.png)
+## Rodar o MVP
 
-![Tela](tests/web/screens/final-02-dossie-a.png)
-
-*Triagem com dados reais do polo AMACRO (06/11/2026). Dossiê ([exemplo](tests/web/screens/real-03-dossie-a-evidencia.png)) e Confiabilidade completam a jornada.*
-
-## Rodar a demo (1 comando)
+Pré-requisitos: **Python 3.11**, [uv](https://docs.astral.sh/uv/), **Node.js 24** e npm. Execute na raiz do repositório:
 
 ```powershell
 .\scripts\serve.ps1
 ```
 
-O script compila o front (`web/`) e sobe a API em <http://127.0.0.1:8000>. A API lê `data/artifacts/` quando existe `index.json`; senão, usa o mock `data/artifacts-mock/`. Para forçar uma raiz: `$env:LASTRO_ARTIFACTS = 'data/artifacts'`.
+O script instala as dependências a partir dos lockfiles, gera os recursos estáticos e compila o frontend. Acesse **http://127.0.0.1:8000**. A primeira instalação precisa de internet. Não é necessário autenticar no Earth Engine, baixar dados brutos ou carregar o modelo ONNX para consultar a demo.
 
-Pré-requisitos: Python 3.11 com [uv](https://docs.astral.sh/uv/), Node 24 e, para reprocessar imagens, Google Earth Engine autenticado (`uv run earthengine authenticate`).
+Em outros sistemas, ou para executar as etapas separadamente:
 
-## Reprocessar do zero
-
-```powershell
-uv run python -m pipeline.ingest.run_all          # PAMGIA, IF100, POA/AUTEX, DETER/PRODES, regras C/D/E, pré-triagem
-uv run python -m pipeline.detect.train            # detector LightGBM (GroupKFold espacial) -> metrics/detector.json
-# U-Net (deep learning): treinar no Colab (colab/lastro_dl.ipynb), salvar lastro_best.pt em data/processed/dl/lastro_unet.pt
-uv run --with torch --with segmentation-models-pytorch==0.5.0 --with onnx --with onnxruntime python scripts/export_unet_onnx.py
-uv run python -m pipeline.detect.avaliar_dl       # validação independente em blocos nunca vistos pela U-Net
-uv run python -m pipeline.detect.calibrar_dl      # escolhe a regra operacional (metade A) e mede na metade B
-uv run python scripts/integrar_unet.py            # registra métricas e regra em detector.json / dl.json
-uv run python -m pipeline.volume.calibrar --baixar --n 72   # baixa S2 das UPAs de calibração
-uv run python -m pipeline.volume.calibrar         # quantis + conformal -> metrics/calibracao.json, montecarlo.json
-uv run python -m pipeline.export.run --top 80     # dossiês com imagem + todas as autorizações documentais -> index.json
+```sh
+uv sync --locked
+npm --prefix web ci
+npm --prefix web run build
+uv run --locked uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
-Os dados brutos ficam em `data/raw/` (`scripts/download_bg.ps1`). Todas as etapas usam cache; passe `--force` em `run_all` para reconstruir. Testes: `uv run pytest tests`.
+A API usa os dados pré-processados incluídos em `data/artifacts/`. O acervo contém **1.142 autorizações reais e um cenário identificado como SIMULAÇÃO**, com 40 análises de imagem já processadas. Triagem, dossiês, mapas, impressão e métricas de confiabilidade usam esse acervo. As métricas descrevem a execução original; não são garantias de desempenho em outras regiões ou períodos.
 
-## Números do polo AMACRO (verificados)
+### Dados simulados e frontend isolado
 
-| Item | Valor | Fonte |
-|---|---|---|
-| Autorizações no polo | **1.142** (1.079 POA, 40 ASV, 23 UAS) | PAMGIA/Sinaflor |
-| Árvores declaradas como exploradas (2022+, com coordenada) | **329.288** registros, 1,87 milhão de m³ | IBAMA IF100 |
-| Autorizações com indício documental | C = **11**, D = **10**, E = **29** (46 com ao menos um) | `data/processed/regras_doc.parquet` |
-| Árvores com coordenada incoerente (> 5 km do polígono) | **810**, tratadas como qualidade cadastral, não como indício | IF100 + PAMGIA |
-| Razão explorado/autorizado (IF100, agregada por autorização) | mediana **0,98**, p95 **1,05** | IF100 |
-| Detector LightGBM vs baseline Otsu (fora da amostra, 65.500 px) | IoU **0,561** vs 0,283 · F1 **0,719** vs 0,442 | `data/artifacts/metrics/detector.json` |
-| Deep learning: U-Net siamesa (treinada no Colab, exportada para ONNX, roda em CPU) | Colab, blocos de 25 km: IoU **0,742** × LightGBM 0,705. Validação local em blocos nunca vistos: IoU 0,720 × 0,451, porém falso alarme 37,7%. **Em uso como confirmação (regra AND LightGBM + U-Net): falso alarme 9,2% × 16,1%, precisão 0,88** | `data/artifacts/metrics/detector.json`, `dl.json` |
-| Calibração imagem → volume (72 UPAs, 17.193 células, GroupKFold por UPA) | cobertura empírica p10–p90 de **84,2%** por célula (78,8% antes do conformal) e **88,9%** por UPA, contra 80% nominais | `data/artifacts/metrics/calibracao.json` |
-| Triagem exportada | 1.142 autorizações reais + 1 cenário SIMULAÇÃO; **39** com análise de imagem; **61** com ao menos um indício (A 1 · B 34 · C 11 · D 10 · E 29 · F2 1) | `data/artifacts/index.json` |
-| Comunicações ao IBAMA (prioridade ≥ 70) | **12** protocolos gerados automaticamente (11 reais + 1 simulado) | `/api/comunicacoes` |
+Para usar o acervo sintético na API, defina `LASTRO_ARTIFACTS=data/artifacts-mock` no ambiente antes de iniciá-la (PowerShell: `$env:LASTRO_ARTIFACTS = 'data/artifacts-mock'`).
 
-## Comunicação automática ao IBAMA (regra de limiar)
-
-Quando um caso atinge **prioridade ≥ 70** (score ≥ 0,70) e tem ao menos um indício, o sistema **gera automaticamente um protocolo de comunicação** destinado à Ouvidoria do IBAMA (canal oficial Fala.BR). O protocolo contém: AUTEX/DOF de referência, volumes (autorizado, declarado e estimado p10–p90), indícios com regra e evidências, limitações, proveniência, link do dossiê e **hash SHA-256** do pacote. Tudo fica numa trilha de auditoria (tela **Comunicações**).
-
-Salvaguardas:
-- O envio exige **confirmação de um servidor identificado, com justificativa** (`LASTRO_CONFIRMACAO_HUMANA=1`, padrão). O score é índice de prioridade, não probabilidade de irregularidade.
-- Cenários `SIMULAÇÃO` **nunca** são enviados.
-- O conector padrão é `simulado`: grava numa caixa de saída local, sem contato externo. `LASTRO_CONECTOR=falabr` gera o texto para protocolo no Fala.BR, que não tem API pública. `LASTRO_CONECTOR=email` envia por SMTP (`LASTRO_SMTP_HOST`, `LASTRO_EMAIL_DESTINO`…) e só deve ser ativado mediante acordo institucional.
-- O limiar é configurável: `LASTRO_LIMIAR_COMUNICACAO` (padrão `0.70`). Código em [`pipeline/comunicacao.py`](pipeline/comunicacao.py).
-
-## Documentação
-
-- [docs/METODO.md](docs/METODO.md): pipeline ponta a ponta, as 7 assinaturas com regras e limiares, conversão imagem → volume (quantis, conformal, Monte Carlo) e corte raso.
-- [docs/MODEL_CARD.md](docs/MODEL_CARD.md): detector, calibração, DL do Colab, usos, vieses, ética.
-- [docs/FONTES.md](docs/FONTES.md): fontes, URLs, datas, licenças e limitações.
-- [pitch/deck.html](pitch/deck.html) e [pitch/ROTEIRO.md](pitch/ROTEIRO.md): apresentação de 5 minutos.
-
-## Estrutura do repositório
-
-```
-contracts/        contrato de artefatos (pydantic + TypeScript), fonte única da verdade
-pipeline/
-  ingest/         PAMGIA, IF100 (normalização de coordenadas), POA/AUTEX, DETER/PRODES, regras C/D/E, pré-triagem
-  imagery/        Sentinel-2 via GEE (par pré/pós, Δ-índices), CBERS-4A por janela COG, renderização
-  detect/         baseline Otsu + LightGBM, validação espacial
-  grid/           células de 100 m em UTM
-  volume/         calibração quantílica + conformal, Monte Carlo, corte raso
-  rules/          assinaturas A, B, C, D, E, F2, F6 e score
-  export/         dossiês e index.json
-  live.py         análise sob demanda (POST /api/analyze/{autex})
-api/              FastAPI somente leitura + análise ao vivo
-web/              React + Vite + MapLibre: Triagem, Dossiê, Confiabilidade
-colab/            notebook de deep learning (U-Net siamesa / Prithvi), opcional
-data/
-  raw/            downloads brutos (não versionado)
-  processed/      parquet intermediários (ver data/processed/README.md)
-  artifacts/      saída consumida pela API (contrato v1)
-  artifacts-mock/ mock completo para desenvolvimento
-docs/  pitch/  tests/  scripts/
+```sh
+npm --prefix web run dev
 ```
 
-## Licenças das fontes
+O Vite encaminha `/api` para a API local. Se ela não responder, o frontend usa dados **simulados**, gerados automaticamente por `predev`/`prebuild` em `web/public/mock/` a partir de `data/artifacts-mock/`. Essa cópia gerada não é versionada. O mock tem dois dossiês completos; os oito registros adicionais servem apenas para preencher a listagem. O frontend isolado não oferece análise ao vivo, impressão pela API nem fila de comunicações persistida.
 
-| Fonte | Licença declarada pelo publicador |
+## Análise ao vivo: preparação adicional
+
+**Um clone novo é suficiente para consultar a demo, mas não para reprocessar novas imagens.** O botão de análise reutiliza o cache dos casos já completos. Para casos apenas documentais, o processamento exige bases intermediárias e modelos LightGBM, que não são distribuídos no repositório. Sem eles, a API informa indisponibilidade sem substituir o acervo por dados inventados.
+
+Para preparar esse processamento:
+
+1. Obtenha os dados nas [fontes públicas documentadas](docs/FONTES.md). Em `data/raw/`, disponha `poa.csv`, `asv.csv`, `uas.csv`, os CSVs IF100 de 2022 em diante em `if100/` e os CSVs DOF AUTEX em `dof_autorizacoes_csv/`.
+2. Autentique a conta no Earth Engine (`uv run earthengine authenticate`) e defina **`LASTRO_EE_PROJECT`** com um projeto seu habilitado para Earth Engine. No PowerShell: `$env:LASTRO_EE_PROJECT = 'seu-projeto-gee'`. Credenciais devem permanecer fora do Git.
+3. Para usar a confirmação U-Net, instale [Git LFS](https://git-lfs.com/) e execute `git lfs install` e `git lfs pull`. O peso `models/lastro_unet.onnx` tem aproximadamente 96 MiB; um ponteiro LFS sem o objeto não é um modelo utilizável. O treinamento original da U-Net não faz parte deste MVP.
+4. Execute as etapas de preparação abaixo, na raiz. Elas consultam serviços externos, podem demorar e atualizam os artefatos locais. Não são necessárias para apresentar a demo:
+
+```sh
+uv run python -m pipeline.ingest.run_all
+uv run python -m pipeline.detect.train
+uv run python -m pipeline.volume.calibrar --baixar --n 72
+uv run python -m pipeline.volume.calibrar
+uv run python -m pipeline.export.run --top 80
+```
+
+A ingestão produz as tabelas de autorizações, árvores, espécies, regras, DETER/PRODES e a pré-triagem em `data/processed/`. O treino gera `data/processed/ml/lgbm_detector.txt` e `threshold.json`; a calibração gera os modelos de volume. Bases públicas podem mudar: uma nova execução não necessariamente reproduz os números do acervo original. Sem os modelos quantílicos, o estimador usa uma aproximação linear, que não equivale à calibração publicada.
+
+`LASTRO_DETECTOR=lightgbm` seleciona apenas LightGBM; por padrão, a detecção espacial usa LightGBM confirmado pela U-Net quando o ONNX está disponível. O volume sempre usa LightGBM. Use a raiz padrão `data/artifacts/` para reprocessamento: `LASTRO_ARTIFACTS` altera a leitura da API, não o destino do pipeline.
+
+## Comunicações e limites de segurança
+
+Casos com prioridade ≥ 70 e ao menos um indício geram um protocolo local. **O conector padrão é `simulado`: não há envio externo.** A confirmação exige identificação e justificativa, mas isso **não é autenticação de usuário**. Cenários SIMULAÇÃO nunca são enviados.
+
+A aplicação é uma **demo local**, sem autenticação ou controles de produção. Mantenha a API em `127.0.0.1`; não a exponha diretamente à internet. Os conectores SMTP e Fala.BR só devem ser configurados após revisão de segurança e acordo institucional. Não há submissão automática por API pública do Fala.BR.
+
+Configurações opcionais por variáveis de ambiente:
+
+| Variável | Padrão / finalidade |
 |---|---|
-| IBAMA Sinaflor (POA, ASV, UAS) | Outra (Aberta), dados abertos IBAMA |
-| IBAMA DOF (AUTEX, Transportes) | Outra (Domínio Público) |
-| IBAMA IF100 | Nenhuma licença informada no portal (dado público) |
-| IBAMA PAMGIA | Serviço público, sem licença explícita |
-| INPE DETER / PRODES (TerraBrasilis) | CC BY-SA 4.0 |
-| INPE CBERS-4A WPM (BDC) | CC BY 4.0 |
-| Copernicus Sentinel-2 | Uso livre e aberto com atribuição ("contains modified Copernicus Sentinel data") |
-| NASA GEDI L4A, Meta Canopy Height | Abertos (NASA) / CC BY 4.0. Planejados, não integrados |
+| `LASTRO_ARTIFACTS` | `data/artifacts/`, com fallback para `data/artifacts-mock/` |
+| `LASTRO_EE_PROJECT` | Sem padrão; projeto do operador para reprocessar imagens |
+| `LASTRO_DETECTOR` | `unet`; aceita `lightgbm` |
+| `LASTRO_CONECTOR` | `simulado`; mantenha assim para demonstração |
+| `LASTRO_CONFIRMACAO_HUMANA` | `1`; mantenha habilitada |
+| `LASTRO_LIMIAR_COMUNICACAO` | `0.70` |
+| `LASTRO_COMUNICACOES` | `data/comunicacoes/`, saída local não versionada |
 
-Detalhes e datas em [docs/FONTES.md](docs/FONTES.md). O Lastro não publica nome, CPF ou CNPJ de detentores. O número AUTEX é público e aparece no app, mas é mascarado nos slides.
+O aplicativo não carrega `.env` automaticamente; exporte as variáveis no terminal/processo. Nunca versione credenciais, arquivos `.env`, dados brutos ou a fila local de comunicações.
+
+## Código e documentação
+
+```text
+api/                  API FastAPI e dossiê imprimível
+web/                  React + TypeScript + Vite + MapLibre
+contracts/            Contratos Pydantic e TypeScript dos artefatos
+pipeline/             Ingestão, processamento, detecção, volume, regras e comunicação
+models/               Peso ONNX para confirmação espacial (Git LFS)
+data/artifacts/       Acervo pré-processado consumido pela demo
+data/artifacts-mock/  Acervo sintético de fallback
+scripts/              Inicialização e geração do acervo sintético
+docs/                 Fontes, método e limitações dos modelos
+```
+
+- [Método](docs/METODO.md): regras, limiares e conversão imagem → volume.
+- [Model card](docs/MODEL_CARD.md): protocolos, métricas históricas, vieses e usos não pretendidos.
+- [Fontes e licenças](docs/FONTES.md): proveniência, datas e atribuições das bases.
+
+O acervo não exporta nomes, CPF ou CNPJ de detentores. Números de autorização e geometrias públicas são mantidos para rastreabilidade. As licenças das fontes continuam aplicáveis; em particular, dados INPE e Copernicus exigem as atribuições indicadas na documentação.

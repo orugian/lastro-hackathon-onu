@@ -5,6 +5,7 @@ from datetime import date, timedelta
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import threading
 import time
@@ -30,7 +31,10 @@ _EE_LOCK = threading.Lock()
 def initialize():
     with _EE_LOCK:
         if not ee.data.is_initialized():
-            ee.Initialize(project="project-f5ab0bff-aa9b-4cb2-97d")
+            project = os.environ.get("LASTRO_EE_PROJECT", "").strip()
+            if not project:
+                raise RuntimeError("Defina LASTRO_EE_PROJECT com seu projeto Google Earth Engine antes de reprocessar imagens.")
+            ee.Initialize(project=project)
 
 
 def utm_crs(aoi):
