@@ -6,6 +6,20 @@ Protótipo de triagem da exploração madeireira na Amazônia. Cruza autorizaç�
 
 > **Resultado experimental de triagem. Não constitui prova nem auto de infração.** O score é prioridade, não probabilidade de irregularidade. A conclusão exige vistoria e análise técnica humana.
 
+## O protótipo
+
+![Tela de triagem do Lastro com dados reais do polo AMACRO](<docs/img/triagem.png>)
+
+*Triagem territorial com dados reais do polo AMACRO.*
+
+![Tela de dossiê do Lastro](<docs/img/dossie.png>)
+
+*Dossiê da autorização, com volumes, indícios e mapa.*
+
+![Dossiê do Lastro com evidência de imagem](<docs/img/dossie-evidencia.png>)
+
+*Evidência de imagem no dossiê. Capturas da demonstração original (06/11/2026).*
+
 ## Rodar o MVP
 
 Pré-requisitos: **Python 3.11**, [uv](https://docs.astral.sh/uv/), **Node.js 24** e npm. Execute na raiz do repositório:
